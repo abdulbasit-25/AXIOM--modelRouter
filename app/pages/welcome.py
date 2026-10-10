@@ -5,7 +5,13 @@ from html import escape
 import streamlit as st
 
 from app.components import page_footer
-from app.config import BRAND_EXPANSION, BRAND_NAME, BRAND_TAGLINE, BRAND_WORDMARK
+from app.config import (
+    BRAND_EXPANSION,
+    BRAND_LOGO_PATH,
+    BRAND_NAME,
+    BRAND_TAGLINE,
+    BRAND_WORDMARK,
+)
 from app.navigation.router import set_destination
 
 EVENT = "AICON'26"
@@ -48,6 +54,8 @@ header[data-testid="stHeader"] { background: transparent; }
 /* Hero */
 .ax-hero { position: relative; min-height: 480px; border-radius: 28px; padding: 3.2rem 3rem; overflow: hidden; display: flex; flex-direction: column; justify-content: center;
     border: 1px solid rgba(212,215,211,.26); background: linear-gradient(145deg, #405653, #2C423F); box-shadow: 0 30px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(212,215,211,.2); }
+.st-key-welcome_logo { display: grid; place-items: center; }
+.st-key-welcome_logo [data-testid="stImage"] img { width: min(100%, 220px); border: 1px solid rgba(212,215,211,.3); border-radius: 22px; box-shadow: 0 20px 48px rgba(0,0,0,.3); }
 .ax-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(212,215,211,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(212,215,211,.07) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse at 70% 40%, #000 20%, transparent 72%); mask-image: radial-gradient(ellipse at 70% 40%, #000 20%, transparent 72%); }
 .ax-orb { position: absolute; border-radius: 50%; filter: blur(64px); opacity: .45; }
 .ax-orb.a { width: 340px; height: 340px; right: -60px; top: -80px; background: var(--steel); animation: ax-float-a 14s ease-in-out infinite; }
@@ -128,6 +136,7 @@ header[data-testid="stHeader"] { background: transparent; }
     .ax-exp::before { width: 28px; }
     .ax-exp span { letter-spacing: .2em; }
 }
+@media (max-width: 820px) { .st-key-welcome_logo { display: none; } }
 @media (prefers-reduced-motion: reduce) {
     .ax-hero *, .ax-exp, .ax-exp::before, .ax-exp span::after, .ax-card, .ax-step, .ax-track,
     .ax-event::before, .ax-label::after, .ax-word, .ax-badge i { animation: none !important; transition: none !important; }
@@ -145,23 +154,32 @@ def render() -> None:
     st.markdown(_html(_CSS), unsafe_allow_html=True)
 
     # Hero
-    st.markdown(
-        _html(
-            f"""
-            <div class="ax-hero">
-                <div class="ax-grid"></div>
-                <div class="ax-orb a"></div>
-                <div class="ax-orb b"></div>
-                <div class="ax-ring"></div>
-                <div class="ax-badge"><i></i>{EVENT} &nbsp;/&nbsp; {EVENT_LONG}</div>
-                <h1 class="ax-word">{escape(BRAND_WORDMARK)}</h1>
-                <div class="ax-exp"><span>{escape(BRAND_EXPANSION)}</span></div>
-                <p class="ax-tag">{escape(BRAND_TAGLINE)}</p>
-            </div>
-            """
-        ),
-        unsafe_allow_html=True,
-    )
+    hero_column, logo_column = st.columns([3.2, 1], gap="medium", vertical_alignment="center")
+    with hero_column:
+        st.markdown(
+            _html(
+                f"""
+                <div class="ax-hero">
+                    <div class="ax-grid"></div>
+                    <div class="ax-orb a"></div>
+                    <div class="ax-orb b"></div>
+                    <div class="ax-ring"></div>
+                    <div class="ax-badge"><i></i>{EVENT} &nbsp;/&nbsp; {EVENT_LONG}</div>
+                    <h1 class="ax-word">{escape(BRAND_WORDMARK)}</h1>
+                    <div class="ax-exp"><span>{escape(BRAND_EXPANSION)}</span></div>
+                    <p class="ax-tag">{escape(BRAND_TAGLINE)}</p>
+                </div>
+                """
+            ),
+            unsafe_allow_html=True,
+        )
+    with logo_column:
+        with st.container(key="welcome_logo"):
+            st.image(
+                BRAND_LOGO_PATH,
+                width=220,
+                alt=f"{BRAND_WORDMARK} — {BRAND_TAGLINE}",
+            )
 
     st.write("")
     cta_a, cta_b, _spacer = st.columns([1.1, 1, 2.2], gap="small")
