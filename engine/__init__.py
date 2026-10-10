@@ -1,4 +1,4 @@
-"""Engine package for Model Router."""
+"""Axiom model routing and telemetry engine."""
 
 from engine.model_client import generate, ModelClient, SUPPORTED_MODELS
 from engine.telemetry import (
