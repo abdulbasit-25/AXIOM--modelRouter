@@ -55,7 +55,7 @@ The app opens in your browser. No API key is needed to explore it, and without o
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Production AI Tutor** | Pick a teaching scenario, adapt the prompt, and send it through classification, routing, verification and telemetry. Shows the answer, selected model, fallback decision, tokens, latency and estimated cost. |
 | **Calibration Studio**  | Compares the tier the router selects with the tier you expect, using controlled examples. It evaluates routing agreement only, not answer quality.                                                            |
-| **SDG Analytics**       | Shows session metrics: routed questions, average latency, model usage, estimated spend and estimated savings against a configured baseline.                                                                   |
+| **SDG Analytics**       | Shows session routing and cost estimates, exports CSV reports, and benchmarks supported models with general or ABSA/LDA rubrics.                                                                                 |
 | **About**               | Explains the engine, the five-step flow and the team.                                                                                                                                                         |
 
 Other highlights:
@@ -64,6 +64,8 @@ Other highlights:
 - **Heuristic verification** with automatic retry on a higher-capability fallback model.
 - **Transparent fallback.** A demo option deliberately simulates a verification failure so you can see escalation happen.
 - **Honest labeling.** Mock responses are always marked as mock.
+- **Model evaluation.** SDG Analytics compares text overlap, expected formatting, latency and estimated cost against a reference rubric. Simulated outputs are visibly marked and cannot update session capability recommendations.
+- **ABSA/LDA evaluation profile.** Separately scores dual-concept coverage, technical pipeline completeness, reference similarity, structural formatting, and cost/latency trade-off.
 - **Axiom identity.** Shared brand tokens, SVG lockups, page title and icon across the app.
 
 ## How routing works
@@ -134,6 +136,7 @@ The project uses script-style tests and does not declare a pytest or lint runner
 ```powershell
 python tests/test_app_integration.py
 python tests/test_router.py
+python tests/test_profiler.py
 ```
 
 To run the engine tests without live Groq requests, patch the model client to its mock path:
@@ -154,7 +157,7 @@ app/
   styles/             Brand color tokens and shared application styles
   config.py           Axiom identity, assets and navigation configuration
   main.py             Streamlit entry point
-core/                 Classification and response-verification logic
+core/                 Classification, response-verification and benchmarking logic
 engine/               Model client, routing, telemetry and pricing estimates
 tests/                Script-style application, engine and router tests
 .streamlit/           Streamlit theme configuration (config.toml)
@@ -165,7 +168,7 @@ tests/                Script-style application, engine and router tests
 - `app/config.py` holds the name, expansion, tagline, shared copy, logo paths and page metadata.
 - `app/styles/tokens.py` is the source of truth for the brand palette.
 - `app/main.py` sets page metadata and wires the theme, session state, navigation and page rendering.
-- `core/` contains the classifier and verifier, and `engine/` contains the model client, router and telemetry.
+- `core/` contains the classifier, verifier and benchmark profiler, and `engine/` contains the model client, router and telemetry.
 
 **Brand palette**
 
@@ -182,6 +185,8 @@ tests/                Script-style application, engine and router tests
 - **No persistent backend.** Telemetry lives in Streamlit session state, so it does not persist across sessions or users and has no database or reporting API.
 - **Costs are estimates.** Model rates and the comparison baseline are configured in the project. They illustrate routing economics and are not billing data or a guarantee of savings.
 - **Calibration measures routing only.** It compares expected and selected tiers, not educational correctness.
+- **Benchmark scores are heuristics.** Character/token overlap and formatting checks do not establish factual correctness, semantic equivalence, safety, or learning outcomes. Only live model outputs update the session-only capability recommendation; production routing remains fixed.
+- **ABSA/LDA coverage is lexical.** Its concept and pipeline checks detect rubric terms and aliases in outputs; they do not verify scientific or technical correctness.
 - **Verification is heuristic.** It is not a semantic, factuality, safety or curriculum-quality check.
 - **Provider availability varies.** Model identifiers, quotas and token limits depend on your Groq account. Provider errors may produce a labeled mock response.
 - **No deployment setup.** Only the local Streamlit command is provided, with no hosting, secrets management or observability configuration.
