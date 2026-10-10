@@ -87,6 +87,6 @@ def render() -> None:
     st.download_button(
         "Download session report (CSV)",
         data=output.getvalue(),
-        file_name="eduroute-session-report.csv",
+        file_name="axiom-session-report.csv",
         mime="text/csv",
     )
