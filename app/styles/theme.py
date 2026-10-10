@@ -1,4 +1,4 @@
-"""Shared visual styling for the EduRoute Streamlit app.
+"""Shared visual styling for the Axiom Streamlit app.
 
 Design notes
 ------------
@@ -27,8 +27,7 @@ APP_CSS = (
         color-scheme: light;
         color: var(--text);
         background:
-            radial-gradient(1100px 480px at 88% -8%, rgba(63, 122, 109, 0.12), transparent 60%),
-            radial-gradient(800px 400px at -5% 12%, rgba(199, 154, 46, 0.07), transparent 60%),
+            radial-gradient(1000px 430px at 88% -8%, rgba(130, 145, 145, 0.10), transparent 62%),
             var(--bg) !important;
     }
 
@@ -86,7 +85,7 @@ APP_CSS = (
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--accent) !important;
+        color: var(--brand-secondary) !important;
         font-size: 0.74rem;
         font-weight: 700;
         letter-spacing: 0.14em;
@@ -127,7 +126,7 @@ APP_CSS = (
         place-items: center;
         flex: 0 0 auto;
         border-radius: 0.8rem;
-        background: linear-gradient(145deg, var(--primary) 0%, var(--accent) 140%);
+        background: var(--brand-primary);
         color: #ffffff;
         font-weight: 700;
         box-shadow: var(--shadow-sm);
@@ -151,7 +150,7 @@ APP_CSS = (
         width: 2.9rem;
         height: 2.9rem;
         border-radius: 0.95rem;
-        box-shadow: 0 5px 14px rgba(44, 74, 68, 0.18);
+        box-shadow: 0 5px 14px rgba(44, 66, 63, 0.14);
     }
 
     .mr-workspace-label, .sidebar-meta, .panel-heading, .insight-label,
@@ -176,7 +175,7 @@ APP_CSS = (
         height: 0.42rem;
         border-radius: 50%;
         background: var(--accent);
-        box-shadow: 0 0 0 3px rgba(63, 122, 109, 0.12);
+        box-shadow: 0 0 0 3px rgba(130, 145, 145, 0.18);
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] > label { display: none; }
@@ -219,9 +218,9 @@ APP_CSS = (
     }
 
     [data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] {
-        background: linear-gradient(110deg, var(--primary) 0%, #355d54 100%);
+        background: var(--brand-primary);
         border-color: transparent;
-        box-shadow: 0 5px 14px rgba(27, 50, 45, 0.16);
+        box-shadow: 0 5px 14px rgba(44, 66, 63, 0.14);
     }
 
     [data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] > div:last-child,
@@ -230,7 +229,7 @@ APP_CSS = (
     }
 
     [data-testid="stSidebar"] [data-testid="stRadioOption"]:focus-within {
-        outline: 3px solid rgba(63, 122, 109, 0.32);
+        outline: 3px solid rgba(130, 145, 145, 0.42);
         outline-offset: 2px;
     }
 
@@ -244,11 +243,9 @@ APP_CSS = (
 
     .mr-engine-card {
         padding: 1rem 1.05rem 0.9rem;
-        border: 1px solid rgba(63, 122, 109, 0.18);
+        border: 1px solid rgba(130, 145, 145, 0.3);
         border-radius: 1rem;
-        background:
-            radial-gradient(180px 100px at 100% 0%, rgba(63, 122, 109, 0.1), transparent 75%),
-            rgba(255, 255, 255, 0.76);
+        background: rgba(255, 255, 255, 0.86);
         box-shadow: var(--shadow-sm);
     }
 
@@ -264,8 +261,8 @@ APP_CSS = (
         width: 0.48rem;
         height: 0.48rem;
         border-radius: 50%;
-        background: #3b8b67;
-        box-shadow: 0 0 0 3px rgba(59, 139, 103, 0.13);
+        background: var(--brand-primary);
+        box-shadow: 0 0 0 3px rgba(130, 145, 145, 0.18);
     }
 
     .mr-engine-title {
@@ -278,10 +275,10 @@ APP_CSS = (
     .mr-engine-live {
         margin-left: auto;
         padding: 0.18rem 0.45rem;
-        border: 1px solid rgba(59, 139, 103, 0.2);
+        border: 1px solid rgba(130, 145, 145, 0.34);
         border-radius: var(--r-pill);
-        background: rgba(59, 139, 103, 0.09);
-        color: #286b4b;
+        background: rgba(130, 145, 145, 0.12);
+        color: var(--brand-primary);
         font-size: 0.6rem;
         font-weight: 750;
         letter-spacing: 0.08em;
@@ -310,7 +307,7 @@ APP_CSS = (
         font-size: 0.7rem;
     }
 
-    .mr-engine-ready { color: #286b4b; font-weight: 700; }
+    .mr-engine-ready { color: var(--brand-primary); font-weight: 700; }
 
     .mr-sidebar-footer {
         display: flex;
@@ -341,7 +338,7 @@ APP_CSS = (
         height: 0.55rem;
         border-radius: 50%;
         background: var(--gold);
-        box-shadow: 0 0 0 4px rgba(199, 154, 46, 0.18);
+        box-shadow: 0 0 0 4px rgba(130, 145, 145, 0.2);
     }
 
     /* 5. Cards and panels */
@@ -374,7 +371,7 @@ APP_CSS = (
     .metric-card { min-height: 130px; }
 
     .metric-value {
-        color: #8a969a !important;
+        color: var(--brand-secondary) !important;
         font-size: 1.9rem;
         font-weight: 700;
         line-height: 1.2;
@@ -390,7 +387,7 @@ APP_CSS = (
         padding: 0.35rem 0.75rem;
         border-radius: var(--r-pill);
         background: var(--primary-soft);
-        border: 1px solid #c9ddd5;
+        border: 1px solid var(--brand-neutral);
         color: var(--primary) !important;
         font-size: 0.78rem;
         font-weight: 700;
@@ -427,7 +424,7 @@ APP_CSS = (
         min-height: 290px;
         display: flex;
         align-items: center;
-        background: linear-gradient(160deg, #ffffff 0%, #f3f6f4 100%);
+        background: var(--sidebar);
     }
 
     .visual-window {
@@ -444,7 +441,7 @@ APP_CSS = (
     .visual-badge {
         display: inline-flex;
         border-radius: var(--r-pill);
-        background: rgba(44, 74, 68, 0.08);
+        background: rgba(44, 66, 63, 0.08);
         border: 1px solid var(--border);
         color: var(--text-2);
         font-size: 0.7rem;
@@ -478,7 +475,7 @@ APP_CSS = (
     .visual-card:nth-child(2) { animation-delay: -1.5s; }
     .visual-card:nth-child(3) { animation-delay: -3s; }
     .visual-card:nth-child(4) { animation-delay: -4.5s; }
-    .visual-card.primary { background: var(--primary-soft); border-color: rgba(44, 74, 68, 0.22); color: var(--primary); }
+    .visual-card.primary { background: var(--primary-soft); border-color: rgba(44, 66, 63, 0.22); color: var(--primary); }
     .visual-card.muted { background: var(--sidebar); }
 
     @keyframes float {
@@ -555,6 +552,97 @@ APP_CSS = (
     }
 
     .team-copy { font-weight: 500; }
+
+    .st-key-team_grid [data-testid="stHorizontalBlock"] {
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .team-card {
+        position: relative;
+        display: flex;
+        height: 100%;
+        min-height: 12rem;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        overflow: hidden;
+        padding: 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        background:
+            radial-gradient(circle at 100% 0%, rgba(130, 145, 145, 0.14), transparent 42%),
+            var(--surface);
+        box-shadow: var(--shadow-sm);
+        transition: transform 180ms var(--ease), box-shadow 180ms var(--ease),
+                    border-color 180ms var(--ease);
+    }
+
+    .team-card::after {
+        position: absolute;
+        right: -1.7rem;
+        bottom: -2.2rem;
+        width: 6rem;
+        height: 6rem;
+        border: 1px solid rgba(130, 145, 145, 0.2);
+        border-radius: 50%;
+        content: "";
+        transition: transform 220ms var(--ease);
+    }
+
+    .team-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--brand-accent);
+        box-shadow: var(--shadow-md);
+    }
+
+    .team-card:hover::after { transform: scale(1.28); }
+
+    .team-avatar {
+        display: grid;
+        width: 3.25rem;
+        height: 3.25rem;
+        place-items: center;
+        margin-bottom: 1.2rem;
+        border: 1px solid rgba(130, 145, 145, 0.34);
+        border-radius: 1rem;
+        background: linear-gradient(145deg, var(--primary-soft), #ffffff);
+        color: var(--brand-primary);
+        font-size: 1rem;
+        font-weight: 750;
+        letter-spacing: 0.04em;
+        box-shadow: 0 5px 14px rgba(44, 66, 63, 0.08);
+        transition: transform 180ms var(--ease);
+    }
+
+    .team-card:hover .team-avatar { transform: rotate(-4deg) scale(1.04); }
+
+    .team-name {
+        margin: 0 0 0.5rem !important;
+        color: var(--text) !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.025em !important;
+        line-height: 1.35 !important;
+    }
+
+    .team-role {
+        display: inline-flex;
+        align-items: center;
+        min-height: 1.8rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: var(--r-pill);
+        background: var(--sidebar);
+        color: var(--text-2);
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.025em;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .team-card, .team-avatar, .team-card::after { transition: none; }
+    }
 
     .page-footer {
         margin-top: 2.2rem;
@@ -636,7 +724,7 @@ APP_CSS = (
     .st-key-scenario_grid .stButton > button[data-testid="stBaseButton-primary"] {
         background: var(--primary-soft);
         border: 1.5px solid var(--primary);
-        box-shadow: 0 0 0 4px rgba(63, 122, 109, 0.14);
+        box-shadow: 0 0 0 4px rgba(130, 145, 145, 0.24);
     }
 
     .st-key-scenario_grid .stButton > button[kind="primary"] p,
@@ -669,7 +757,7 @@ APP_CSS = (
 
     [data-testid="stTextArea"] > div > div:focus-within {
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(63, 122, 109, 0.18);
+        box-shadow: 0 0 0 3px rgba(130, 145, 145, 0.3);
     }
 
     button:focus-visible, [role="radio"]:focus-visible {
@@ -699,7 +787,7 @@ APP_CSS = (
         padding: 1.1rem 0.8rem;
         border: 1.5px dashed var(--border-strong);
         border-radius: var(--r-md);
-        background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(44, 74, 68, 0.025) 10px 20px);
+        background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(44, 66, 63, 0.025) 10px 20px);
     }
 
     .empty-icon {
@@ -760,6 +848,13 @@ APP_CSS = (
         font-size: 1.15rem;
         letter-spacing: -0.03em;
         color: var(--text);
+    }
+
+    .mobile-brand-name {
+        color: var(--brand-primary);
+        font-size: 0.95rem;
+        font-weight: 750;
+        letter-spacing: 0.12em;
     }
 
     div[role="dialog"] { border-radius: var(--r-lg); background: var(--bg); }
