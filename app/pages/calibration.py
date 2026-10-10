@@ -1,28 +1,54 @@
 """Calibration Studio page."""
 
 from datetime import datetime, timezone
+from html import escape
 import logging
 
 import streamlit as st
 
-from app.components import empty_state, page_header, section_heading
 from app.config import MAX_QUESTION_CHARS
 from app.services.router_service import get_router
+from app.pages import page_base as ui
 
 logger = logging.getLogger(__name__)
 
+_VERDICT_CSS = """
+<style>
+.px-verdict { position: relative; overflow: hidden; margin-top: 1.4rem; padding: 1.8rem; border-radius: 24px; border: 1px solid rgba(212,215,211,.3); background: linear-gradient(160deg, #405653, #2C423F); box-shadow: 0 18px 44px rgba(0,0,0,.25); animation: px-rise .9s both; }
+.px-verdict.match { border-color: rgba(212,215,211,.55); }
+.px-verdict.miss { border-style: dashed; }
+.px-verdict::before { content:""; position:absolute; right:-80px; top:-80px; width:240px; height:240px; border-radius:50%; background: radial-gradient(circle, rgba(212,215,211,.3), transparent 70%); }
+.px-verdict small { position: relative; display: block; font-size: .7rem; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--steel); }
+.stMarkdown .px-verdict h3 { position: relative; margin: .6rem 0 1.4rem; padding: 0; font-size: clamp(1.15rem, 2.2vw, 1.5rem); font-weight: 300; line-height: 1.5; color: var(--mist) !important; }
+.px-tiers { position: relative; display: flex; align-items: center; gap: 1.4rem; margin-bottom: 1.4rem; }
+.px-tiers div small { margin-bottom: .3rem; }
+.px-tiers b { font-size: 2.6rem; font-weight: 200; line-height: 1; color: var(--mist); }
+.px-arrow { flex: 0 0 72px; height: 1px; background: linear-gradient(90deg, var(--mist), rgba(212,215,211,.2)); transform-origin: left; animation: px-line 1.2s .3s both; }
+.px-verdict.miss .px-arrow { background: repeating-linear-gradient(90deg, var(--sage) 0 6px, transparent 6px 12px); }
+</style>
+"""
+
 
 def render() -> None:
-    page_header(
+    ui.inject()
+    st.markdown(ui.html(_VERDICT_CSS), unsafe_allow_html=True)
+
+    ui.hero(
+        "Calibration",
         "Calibration Studio",
         "Check whether questions take the expected route.",
-        "Evaluate routing decisions with controlled examples, compare expected and selected complexity tiers, and inspect the resulting route and cost estimates.",
-    )
-    st.info(
-        "Each evaluation makes a real router request and is included in session analytics. "
-        "Without GROQ_API_KEY, the router uses its clearly labeled local mock response."
+        note=(
+            "Each evaluation makes a real router request and is included in session analytics. "
+            "Without GROQ_API_KEY, the router uses its clearly labeled local mock response."
+        ),
     )
 
+    ui.label(
+        "Evaluate",
+        "Evaluate routing decisions with controlled examples, compare expected and selected "
+        "complexity tiers, and inspect the resulting route and cost estimates.",
+        index="01",
+    )
     with st.form("calibration_form"):
         prompt = st.text_area(
             "Evaluation question",
@@ -79,31 +105,70 @@ def render() -> None:
 
     latest = st.session_state.get("latest_calibration")
     if latest:
+        ui.label("Result", index="02")
         if latest["tier_match"]:
-            st.success(f"Tier agreement: expected and selected Tier {latest['actual_tier']}.")
+            state, kicker = "match", "Tier agreement"
+            message = f"Tier agreement: expected and selected Tier {latest['actual_tier']}."
         else:
-            st.warning(
+            state, kicker = "miss", "Tier mismatch"
+            message = (
                 f"Tier mismatch: expected Tier {latest['expected_tier']}, "
                 f"router selected Tier {latest['actual_tier']}."
             )
-        st.write(
-            f"Route: {latest['initial_model']} → {latest['final_model']} · "
-            f"{'escalated' if latest['fallback_triggered'] else 'no escalation'} · "
-            f"{'simulated' if latest['mock_fallback'] else 'live'}"
+        route = f"{latest['initial_model']} → {latest['final_model']}"
+        pills = "".join(
+            (
+                ui.pill(route),
+                ui.pill("escalated" if latest["fallback_triggered"] else "no escalation"),
+                ui.pill("simulated" if latest["mock_fallback"] else "live"),
+            )
+        )
+        st.markdown(
+            ui.html(
+                f"""
+                <div class="px-verdict {state}">
+                    <small>{escape(kicker)}</small>
+                    <h3>{escape(message)}</h3>
+                    <div class="px-tiers">
+                        <div><small>Expected</small><b>{escape(str(latest["expected_tier"]))}</b></div>
+                        <span class="px-arrow"></span>
+                        <div><small>Selected</small><b>{escape(str(latest["actual_tier"]))}</b></div>
+                    </div>
+                    <div class="px-pills">{pills}</div>
+                </div>
+                """
+            ),
+            unsafe_allow_html=True,
         )
 
     calibration_results = st.session_state.get("calibration_results", [])
     if calibration_results:
-        section_heading(
+        matches = sum(item["tier_match"] for item in calibration_results)
+        total = len(calibration_results)
+        ui.label(
             "Evaluation history",
             "Tier agreement reflects the expected tier you supplied; it is not a response-quality score.",
+            index="03",
         )
+        st.markdown(
+            ui.tiles(
+                (
+                    ("Evaluations", str(total), "This session"),
+                    ("Matched", str(matches), "Expected tier equals selected tier"),
+                    ("Agreement", f"{matches / total * 100:.0f}%", "Of evaluations so far"),
+                )
+            ),
+            unsafe_allow_html=True,
+        )
+        st.write("")
         st.dataframe(calibration_results, width="stretch", hide_index=True)
-        matches = sum(item["tier_match"] for item in calibration_results)
-        st.caption(f"{matches} of {len(calibration_results)} evaluations matched the expected tier.")
+        st.caption(f"{matches} of {total} evaluations matched the expected tier.")
     else:
-        empty_state(
-            "No evaluations yet",
-            "Run an evaluation above to see the router's selected tier and route details.",
-            "◎",
+        ui.label("Evaluation history", index="03")
+        st.markdown(
+            ui.empty(
+                "No evaluations yet",
+                "Run an evaluation above to see the router's selected tier and route details.",
+            ),
+            unsafe_allow_html=True,
         )
