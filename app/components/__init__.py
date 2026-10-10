@@ -1,7 +1,7 @@
 """Stable exports for shared Streamlit presentation components."""
 
 from app.components.branding import brand_lockup, mobile_brand
-from app.components.cards import feature_card, info_section, steps_markup
+from app.components.cards import feature_card, info_section, steps_markup, team_member_card
 from app.components.feedback import chip, empty_state
 from app.components.footers import page_footer
 from app.components.headers import page_header, section_heading
@@ -14,6 +14,7 @@ __all__ = [
     "feature_card",
     "info_section",
     "steps_markup",
+    "team_member_card",
     "chip",
     "empty_state",
     "page_footer",
