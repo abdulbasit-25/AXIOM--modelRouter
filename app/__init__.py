@@ -1,1 +1,1 @@
-"""EduRoute frontend package."""
+"""Axiom Streamlit application package."""
