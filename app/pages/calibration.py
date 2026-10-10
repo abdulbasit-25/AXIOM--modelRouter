@@ -14,6 +14,65 @@ logger = logging.getLogger(__name__)
 
 _VERDICT_CSS = """
 <style>
+.st-key-calibration_form [data-testid="stWidgetLabel"] p {
+    color: #E5E7E3 !important;
+}
+.st-key-calibration_form [data-testid="stTextArea"] textarea {
+    background: #FFFFFF !important;
+    color: #263A36 !important;
+    -webkit-text-fill-color: #263A36 !important;
+    caret-color: #263A36 !important;
+}
+.st-key-calibration_form [data-testid="stTextArea"] textarea::placeholder {
+    color: #566970 !important;
+    -webkit-text-fill-color: #566970 !important;
+    opacity: 1 !important;
+}
+.st-key-calibration_form [data-baseweb="textarea"] {
+    background: #FFFFFF !important;
+    border-color: #899B9A !important;
+}
+.st-key-calibration_form [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    background: #FFFFFF !important;
+    border-color: #899B9A !important;
+}
+.st-key-calibration_form [data-testid="stSelectbox"] [data-baseweb="select"] span,
+.st-key-calibration_form [data-testid="stSelectbox"] [data-baseweb="select"] div {
+    color: #263A36 !important;
+}
+.st-key-calibration_form [data-testid="stSelectbox"] [data-baseweb="select"] svg {
+    color: #263A36 !important;
+    fill: #263A36 !important;
+}
+.st-key-calibration_form [data-testid="stSelectbox"] [data-baseweb="select"] > div:hover {
+    border-color: #263A36 !important;
+}
+.st-key-calibration_form [data-baseweb="textarea"]:focus-within,
+.st-key-calibration_form [data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within {
+    border-color: #263A36 !important;
+    box-shadow: 0 0 0 2px rgba(38,58,54,.24) !important;
+}
+.st-key-calibration_form .stFormSubmitButton > button[kind="primaryFormSubmit"] {
+    background: #263A36 !important;
+    border-color: #263A36 !important;
+    color: #FFFFFF !important;
+}
+.st-key-calibration_form .stFormSubmitButton > button[kind="primaryFormSubmit"] p,
+.st-key-calibration_form .stFormSubmitButton > button[kind="primaryFormSubmit"] span {
+    color: #FFFFFF !important;
+}
+.st-key-calibration_form .stFormSubmitButton > button[kind="primaryFormSubmit"]:hover {
+    background: #405653 !important;
+    border-color: #405653 !important;
+}
+.st-key-calibration_form .stFormSubmitButton > button[kind="primaryFormSubmit"]:active {
+    background: #4C5B61 !important;
+    border-color: #4C5B61 !important;
+}
+.st-key-calibration_form .stFormSubmitButton > button[kind="primaryFormSubmit"]:focus-visible {
+    outline: 3px solid #A3ADA5 !important;
+    outline-offset: 3px;
+}
 .px-verdict { position: relative; overflow: hidden; margin-top: 1.4rem; padding: 1.8rem; border-radius: 24px; border: 1px solid rgba(212,215,211,.3); background: linear-gradient(160deg, #405653, #2C423F); box-shadow: 0 18px 44px rgba(0,0,0,.25); animation: px-rise .9s both; }
 .px-verdict.match { border-color: rgba(212,215,211,.55); }
 .px-verdict.miss { border-style: dashed; }

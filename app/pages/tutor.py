@@ -25,6 +25,54 @@ _TUTOR_CSS = """
 .st-key-scenario_grid button[kind="primary"]:hover { background: linear-gradient(135deg, #4a625f, #3b544e); color: var(--mist); }
 .st-key-scenario_grid button[kind="primary"]:active { background: var(--slate-hover); color: var(--mist); }
 .st-key-composer_actions { margin-top: .4rem; }
+.st-key-question_section .px-label { color: #344B45 !important; }
+.st-key-question_section .px-label em { color: #263A36 !important; }
+.st-key-question_section .px-sub { color: #4C5B61 !important; }
+.st-key-question_composer [data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: rgba(44,66,63,.35) !important;
+    background: #FFFFFF !important;
+}
+.st-key-question_composer [data-baseweb="textarea"] {
+    background: #FFFFFF !important;
+    border: 1px solid #899B9A !important;
+}
+.st-key-question_composer [data-testid="stTextArea"] textarea {
+    background: #FFFFFF !important;
+    color: #263A36 !important;
+    -webkit-text-fill-color: #263A36 !important;
+    caret-color: #263A36 !important;
+}
+.st-key-question_composer [data-testid="stTextArea"] textarea::placeholder {
+    color: #566970 !important;
+    -webkit-text-fill-color: #566970 !important;
+    opacity: 1 !important;
+}
+.st-key-question_composer [data-testid="stTextArea"] [data-testid="stWidgetLabel"] p {
+    color: #344B45 !important;
+}
+.st-key-question_composer .stButton > button[kind="primary"] {
+    background: #263A36 !important;
+    border-color: #263A36 !important;
+    color: #FFFFFF !important;
+}
+.st-key-question_composer .stButton > button[kind="primary"] p,
+.st-key-question_composer .stButton > button[kind="primary"] span {
+    color: #FFFFFF !important;
+}
+.st-key-question_composer .stButton > button[kind="primary"]:hover {
+    background: #405653 !important;
+    border-color: #405653 !important;
+}
+.st-key-question_composer .stButton > button[kind="primary"]:active {
+    background: #4C5B61 !important;
+    border-color: #4C5B61 !important;
+}
+.st-key-question_composer .stButton > button[kind="primary"]:disabled {
+    background: #D4D7D3 !important;
+    border-color: #899B9A !important;
+    color: #263A36 !important;
+    opacity: 1 !important;
+}
 .composer-meta { text-align: right; }
 .px-answer-empty { opacity: .9; }
 [data-testid="stVerticalBlockBorderWrapper"] .stMarkdown p, [data-testid="stVerticalBlockBorderWrapper"] .stMarkdown li { color: var(--mist); line-height: 1.8; }
@@ -87,26 +135,27 @@ def render() -> None:
     ui.label("Choose a scenario", "Select the teaching pattern that best matches the learning goal.", index="01")
     _render_scenario_picker()
 
-    ui.label("Shape the question", "Adapt the sample prompt before sending it through the tutor.", index="02")
-    with st.container(border=True):
-        question = st.text_area(
-            "Educational question",
-            key="question_input",
-            height=140,
-            max_chars=MAX_QUESTION_CHARS,
-            placeholder="Enter a question you would like help understanding.",
-            label_visibility="collapsed",
-        )
-        with st.container(key="composer_actions"):
-            action_col, meta_col = st.columns([1, 2], vertical_alignment="center")
-            with action_col:
-                run_clicked = st.button("Run tutor", type="primary", key="run_tutor")
-            with meta_col:
-                st.markdown(
-                    f'<div class="composer-meta"><div class="px-pills" style="justify-content:flex-end">'
-                    f'{ui.pill(st.session_state.get("scenario", ""))}</div></div>',
-                    unsafe_allow_html=True,
-                )
+    with st.container(key="question_section"):
+        ui.label("Shape the question", "Adapt the sample prompt before sending it through the tutor.", index="02")
+        with st.container(border=True, key="question_composer"):
+            question = st.text_area(
+                "Educational question",
+                key="question_input",
+                height=140,
+                max_chars=MAX_QUESTION_CHARS,
+                placeholder="Enter a question you would like help understanding.",
+                label_visibility="collapsed",
+            )
+            with st.container(key="composer_actions"):
+                action_col, meta_col = st.columns([1, 2], vertical_alignment="center")
+                with action_col:
+                    run_clicked = st.button("Run tutor", type="primary", key="run_tutor")
+                with meta_col:
+                    st.markdown(
+                        f'<div class="composer-meta"><div class="px-pills" style="justify-content:flex-end">'
+                        f'{ui.pill(st.session_state.get("scenario", ""))}</div></div>',
+                        unsafe_allow_html=True,
+                    )
 
     if run_clicked:
         if question.strip():

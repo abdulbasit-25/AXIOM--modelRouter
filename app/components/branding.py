@@ -13,7 +13,7 @@ from app.config import (
 def brand_lockup() -> None:
     """Render the sidebar brand block."""
     st.image(
-        BRAND_LOGO_PATH,
+        BRAND_LOGO_PATH.read_bytes(),
         width=128,
         alt=f"{BRAND_WORDMARK} — {BRAND_TAGLINE}",
     )
@@ -21,7 +21,7 @@ def brand_lockup() -> None:
 
 def mobile_brand() -> None:
     """Render the compact mobile brand."""
-    st.image(BRAND_MARK_PATH, width=30, alt="")
+    st.image(BRAND_MARK_PATH.read_bytes(), width=30, alt="")
     st.markdown(
         f'<span class="mobile-brand-name">{BRAND_WORDMARK}</span>',
         unsafe_allow_html=True,
