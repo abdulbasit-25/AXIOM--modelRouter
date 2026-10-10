@@ -16,7 +16,7 @@ def render() -> None:
     page_header(
         "Calibration Studio",
         "Check whether questions take the expected route.",
-        "Submit an evaluation prompt to the live router, compare its selected complexity tier with your expected tier, and inspect the resulting route and cost.",
+        "Evaluate routing decisions with controlled examples, compare expected and selected complexity tiers, and inspect the resulting route and cost estimates.",
     )
     st.info(
         "Each evaluation makes a real router request and is included in session analytics. "
