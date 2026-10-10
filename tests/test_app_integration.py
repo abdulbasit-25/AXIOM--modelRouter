@@ -90,7 +90,52 @@ def test_calibration_evaluates_route_and_records_tier_agreement():
         assert app.session_state["production_router"].telemetry.total_queries == 1
 
 
+def test_all_pages_render_and_router_is_reused_across_navigation():
+    destinations = (
+        "Welcome",
+        "Production AI Tutor",
+        "Calibration Studio",
+        "SDG Analytics",
+        "About",
+    )
+    with _without_api_key():
+        app = AppTest.from_file(str(PROJECT_ROOT / "app" / "main.py")).run(timeout=10)
+        assert not app.exception
+        app.radio(key="active_destination").set_value("SDG Analytics").run(timeout=10)
+        router = app.session_state["production_router"]
+
+        for destination in destinations:
+            app.radio(key="active_destination").set_value(destination).run(timeout=10)
+            assert not app.exception
+            assert app.session_state["active_destination"] == destination
+            assert app.session_state["production_router"] is router
+
+
+def test_unknown_active_destination_recovers_to_welcome():
+    with _without_api_key():
+        app = AppTest.from_file(str(PROJECT_ROOT / "app" / "main.py"))
+        app.session_state["active_destination"] = "Unknown page"
+        app.run(timeout=10)
+
+        assert not app.exception
+        assert app.session_state["active_destination"] == "Welcome"
+        assert any("A more thoughtful way to learn." in item.value for item in app.title)
+
+
+def test_welcome_call_to_action_navigates_to_tutor():
+    with _without_api_key():
+        app = AppTest.from_file(str(PROJECT_ROOT / "app" / "main.py")).run(timeout=10)
+        app.button(key="cta_tutor").click().run(timeout=10)
+
+        assert not app.exception
+        assert app.session_state["active_destination"] == "Production AI Tutor"
+        assert any("1 · Choose a scenario" in item.value for item in app.markdown)
+
+
 if __name__ == "__main__":
     test_tutor_submits_question_and_displays_router_result()
     test_fallback_scenario_runs_both_models_and_records_one_query()
     test_calibration_evaluates_route_and_records_tier_agreement()
+    test_all_pages_render_and_router_is_reused_across_navigation()
+    test_unknown_active_destination_recovers_to_welcome()
+    test_welcome_call_to_action_navigates_to_tutor()

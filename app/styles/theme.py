@@ -10,34 +10,13 @@ Design notes
   ``.st-key-x`` class, which is how the layout hooks below target them.
 """
 
-APP_CSS = """
-<style>
-    /* 1. Tokens */
-    :root {
-        --bg: #f6f4ef;
-        --surface: #ffffff;
-        --sidebar: #edf1ef;
-        --border: #e1dfd8;
-        --border-strong: #cdcac0;
-        --primary: #2c4a44;
-        --primary-strong: #1b322d;
-        --primary-soft: #e1eee9;
-        --accent: #3f7a6d;
-        --gold: #c79a2e;
-        --text: #182226;
-        --text-2: #41525a;
-        --text-3: #566469;
-        --warn-bg: #f8f0da;
-        --warn-text: #5c4813;
-        --warn-border: #e8d8a6;
-        --r-md: 1rem;
-        --r-lg: 1.4rem;
-        --r-pill: 999px;
-        --shadow-sm: 0 1px 2px rgba(24, 34, 38, 0.04), 0 4px 12px rgba(24, 34, 38, 0.04);
-        --shadow-md: 0 2px 4px rgba(24, 34, 38, 0.05), 0 14px 30px rgba(24, 34, 38, 0.09);
-        --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-    }
+from app.styles.tokens import CSS_VARIABLES
 
+
+APP_CSS = (
+    "<style>"
+    + CSS_VARIABLES
+    + """
     /* 2. App shell */
     html, body, .stApp {
         font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -134,7 +113,14 @@ APP_CSS = """
     .section-heading { margin-top: 2.4rem !important; margin-bottom: 0.2rem !important; }
 
     /* 4. Brand and sidebar */
-    .brand-shell { display: flex; align-items: center; gap: 0.8rem; padding: 0.1rem 0 0.9rem; }
+    .brand-shell {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.35rem 0.1rem 1.25rem;
+        margin-bottom: 1.05rem;
+        border-bottom: 1px solid var(--border);
+    }
 
     .brand-mark, .mini-brand-mark, .team-mark {
         display: grid;
@@ -159,9 +145,16 @@ APP_CSS = """
         color: var(--text) !important;
     }
 
-    .brand-tagline { font-size: 0.78rem; color: var(--text-2) !important; margin-top: 0.15rem; }
+    .brand-tagline { font-size: 0.78rem; color: var(--text-2) !important; margin-top: 0.22rem; }
 
-    .sidebar-section-label, .sidebar-meta, .panel-heading, .insight-label,
+    [data-testid="stSidebar"] .brand-mark {
+        width: 2.9rem;
+        height: 2.9rem;
+        border-radius: 0.95rem;
+        box-shadow: 0 5px 14px rgba(44, 74, 68, 0.18);
+    }
+
+    .mr-workspace-label, .sidebar-meta, .panel-heading, .insight-label,
     .metric-label, .about-kicker {
         color: var(--text-2) !important;
         font-size: 0.72rem;
@@ -170,50 +163,164 @@ APP_CSS = """
         text-transform: uppercase;
     }
 
-    .sidebar-section-label, .sidebar-meta { margin: 0.4rem 0 0.7rem; }
+    .mr-workspace-label {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin: 0.25rem 0 0.7rem;
+        padding-left: 0.25rem;
+    }
+
+    .mr-label-dot {
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 3px rgba(63, 122, 109, 0.12);
+    }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] > label { display: none; }
 
     [data-testid="stSidebar"] [role="radiogroup"] {
         display: flex;
         flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.3rem;
     }
 
-    [data-testid="stSidebar"] label[data-baseweb="radio"] {
+    [data-testid="stSidebar"] [data-testid="stRadioOption"] {
         width: 100%;
         margin: 0;
-        padding: 0.75rem 0.95rem;
+        min-height: 2.9rem;
+        padding: 0.68rem 0.85rem;
         border: 1px solid transparent;
-        border-radius: var(--r-md);
+        border-radius: 0.85rem;
         background: transparent;
         cursor: pointer;
-        transition: background 0.18s var(--ease), border-color 0.18s var(--ease), transform 0.18s var(--ease);
+        transition: background 0.18s var(--ease), border-color 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
     }
 
-    [data-testid="stSidebar"] label[data-baseweb="radio"] > div:first-child { display: none; }
+    [data-testid="stSidebar"] [data-testid="stRadioOption"] > span:first-child { display: none; }
 
-    [data-testid="stSidebar"] label[data-baseweb="radio"] p {
+    [data-testid="stSidebar"] [data-testid="stRadioOption"] > div:last-child {
+        display: flex;
+        align-items: center;
+        width: 100%;
         color: var(--text) !important;
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        line-height: 1.35;
+        margin: 0;
     }
 
-    [data-testid="stSidebar"] label[data-baseweb="radio"]:hover {
-        background: rgba(255, 255, 255, 0.75);
+    [data-testid="stSidebar"] [data-testid="stRadioOption"]:hover {
+        background: rgba(255, 255, 255, 0.82);
         border-color: var(--border);
-        transform: translateX(2px);
+        transform: translateX(3px);
     }
 
-    [data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) {
-        background: var(--primary);
-        border-color: var(--primary);
+    [data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] {
+        background: linear-gradient(110deg, var(--primary) 0%, #355d54 100%);
+        border-color: transparent;
+        box-shadow: 0 5px 14px rgba(27, 50, 45, 0.16);
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] > div:last-child,
+    [data-testid="stSidebar"] [data-testid="stRadioOption"][data-selected="true"] > div:last-child * {
+        color: #ffffff !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadioOption"]:focus-within {
+        outline: 3px solid rgba(63, 122, 109, 0.32);
+        outline-offset: 2px;
+    }
+
+    .mr-sidebar-spacer { height: 1.2rem; }
+
+    .mr-sidebar-divider {
+        height: 1px;
+        margin: 0.15rem 0 1.1rem;
+        background: var(--border);
+    }
+
+    .mr-engine-card {
+        padding: 1rem 1.05rem 0.9rem;
+        border: 1px solid rgba(63, 122, 109, 0.18);
+        border-radius: 1rem;
+        background:
+            radial-gradient(180px 100px at 100% 0%, rgba(63, 122, 109, 0.1), transparent 75%),
+            rgba(255, 255, 255, 0.76);
         box-shadow: var(--shadow-sm);
     }
 
-    [data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) p,
-    [data-testid="stSidebar"] label[data-baseweb="radio"]:has(input:checked) div {
-        color: #ffffff !important;
+    .mr-engine-header, .mr-engine-footer {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mr-engine-header { margin-bottom: 0.8rem; }
+
+    .mr-engine-indicator {
+        width: 0.48rem;
+        height: 0.48rem;
+        border-radius: 50%;
+        background: #3b8b67;
+        box-shadow: 0 0 0 3px rgba(59, 139, 103, 0.13);
+    }
+
+    .mr-engine-title {
+        color: var(--text-2);
+        font-size: 0.65rem;
+        font-weight: 750;
+        letter-spacing: 0.11em;
+    }
+
+    .mr-engine-live {
+        margin-left: auto;
+        padding: 0.18rem 0.45rem;
+        border: 1px solid rgba(59, 139, 103, 0.2);
+        border-radius: var(--r-pill);
+        background: rgba(59, 139, 103, 0.09);
+        color: #286b4b;
+        font-size: 0.6rem;
+        font-weight: 750;
+        letter-spacing: 0.08em;
+    }
+
+    .mr-engine-name {
+        color: var(--text);
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    .mr-engine-description {
+        margin-top: 0.28rem;
+        color: var(--text-2);
+        font-size: 0.76rem;
+        line-height: 1.5;
+    }
+
+    .mr-engine-footer {
+        justify-content: space-between;
+        margin-top: 0.85rem;
+        padding-top: 0.7rem;
+        border-top: 1px solid var(--border);
+        color: var(--text-3);
+        font-size: 0.7rem;
+    }
+
+    .mr-engine-ready { color: #286b4b; font-weight: 700; }
+
+    .mr-sidebar-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.9rem;
+        color: var(--text-3);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
     }
 
     .status-pill {
@@ -748,5 +855,14 @@ APP_CSS = """
             scroll-behavior: auto !important;
         }
     }
+    
 </style>
 """
+)
+
+
+def apply_theme() -> None:
+    """Install the shared application CSS in the current Streamlit run."""
+    import streamlit as st
+
+    st.markdown(APP_CSS, unsafe_allow_html=True)
