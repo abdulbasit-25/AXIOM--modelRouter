@@ -14,7 +14,7 @@ def brand_lockup() -> None:
     """Render the sidebar brand block."""
     st.image(
         BRAND_LOGO_PATH,
-        width=152,
+        width=128,
         alt=f"{BRAND_WORDMARK} — {BRAND_TAGLINE}",
     )
 

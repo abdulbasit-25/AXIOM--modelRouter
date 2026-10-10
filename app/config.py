@@ -19,7 +19,7 @@ BRAND_MARK_PATH = ASSETS_DIR / "android-chrome-192x192.png"
 FAVICON_PATH = ASSETS_DIR / "favicon-32x32.png"
 
 PAGE_TITLE = "Axiom — Intelligence, Routed with Purpose"
-PAGE_ICON = str(FAVICON_PATH)
+PAGE_ICON = str(BRAND_MARK_PATH)
 
 NAVIGATION = (
     "Welcome",
