@@ -8,6 +8,7 @@ Demonstrates:
 
 import os
 import sys
+from unittest.mock import patch
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -136,4 +137,5 @@ def run_demonstration():
 
 
 if __name__ == "__main__":
-    run_demonstration()
+    with patch("engine.model_client.get_groq_client", return_value=None):
+        run_demonstration()

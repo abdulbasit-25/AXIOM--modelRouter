@@ -132,6 +132,7 @@ class TelemetryTracker:
         self,
         model_calls: Sequence[tuple[str, int, int]],
         track: bool = True,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> SavingsResult:
         """Calculate aggregate costs for all model calls made for one routed query."""
         if not model_calls:
@@ -189,6 +190,7 @@ class TelemetryTracker:
                     "baseline_cost": baseline_cost,
                     "dollars_saved": dollars_saved,
                     "savings_pct": savings_pct,
+                    **(metadata or {}),
                 }
             )
 

@@ -162,7 +162,7 @@ APP_CSS = """
     .brand-tagline { font-size: 0.78rem; color: var(--text-2) !important; margin-top: 0.15rem; }
 
     .sidebar-section-label, .sidebar-meta, .panel-heading, .insight-label,
-    .metric-label, .plan-kicker, .about-kicker {
+    .metric-label, .about-kicker {
         color: var(--text-2) !important;
         font-size: 0.72rem;
         font-weight: 700;
@@ -238,7 +238,7 @@ APP_CSS = """
     }
 
     /* 5. Cards and panels */
-    .insight-card, .status-card, .plan-card, .metric-card, .feature-card,
+    .insight-card, .status-card, .metric-card, .feature-card,
     .about-section, .overview-panel, .welcome-visual, .page-footer {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -246,14 +246,14 @@ APP_CSS = """
         box-shadow: var(--shadow-sm);
     }
 
-    .insight-card, .status-card, .plan-card, .feature-card,
+    .insight-card, .status-card, .feature-card,
     .overview-panel, .about-section, .metric-card, .welcome-visual { padding: 1.3rem 1.35rem; }
 
     .status-card { background: var(--sidebar); }
     .about-section { margin-top: 1rem; }
     .overview-panel { margin-top: 0.8rem; }
 
-    .insight-card p, .status-card p, .plan-card p, .feature-card p,
+    .insight-card p, .status-card p, .feature-card p,
     .overview-panel p, .about-section p, .metric-note, .step-list,
     .step-list li, .team-copy, .hero-copy p, .result-placeholder, .route-note {
         color: var(--text-3) !important;
@@ -262,40 +262,7 @@ APP_CSS = """
         margin: 0;
     }
 
-    .insight-label, .metric-label, .plan-kicker, .about-kicker { margin-bottom: 0.7rem; }
-
-    .plan-card h4 { margin: 0 0 0.6rem; font-size: 1.15rem; }
-
-    .plan-badge, .planning-pill {
-        display: inline-flex;
-        align-items: center;
-        border-radius: var(--r-pill);
-        background: #edf3ef;
-        border: 1px solid #cfe1d8;
-        color: var(--primary) !important;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        padding: 0.34rem 0.7rem;
-    }
-
-    .plan-badge { margin-top: 1rem; }
-
-    .planning-banner {
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-        padding: 0.95rem 1.1rem;
-        background: var(--warn-bg);
-        border: 1px solid var(--warn-border);
-        border-radius: var(--r-md);
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin: 0.8rem 0 1.6rem;
-    }
-
-    .planning-banner span { color: var(--warn-text) !important; }
+    .insight-label, .metric-label, .about-kicker { margin-bottom: 0.7rem; }
 
     .metric-card { min-height: 130px; }
 
@@ -758,14 +725,14 @@ APP_CSS = """
         .st-key-composer_actions [data-testid="column"]:first-child { flex: 0 0 auto !important; }
 
         .welcome-visual { min-height: 0; }
-        .page-footer, .planning-banner { flex-direction: column; align-items: flex-start; }
+        .page-footer { flex-direction: column; align-items: flex-start; }
         .feature-card { min-height: 0; }
     }
 
     @media (max-width: 520px) {
         .page-intro { font-size: 1rem; }
 
-        .insight-card, .status-card, .plan-card, .feature-card,
+        .insight-card, .status-card, .feature-card,
         .overview-panel, .about-section, .metric-card, .welcome-visual { padding: 1.1rem; }
 
         .stButton > button { width: 100%; }

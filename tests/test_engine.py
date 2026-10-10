@@ -3,6 +3,8 @@
 import math
 import os
 import sys
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 # Ensure repository root is in Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -66,6 +68,23 @@ def test_model_client_generate():
     assert class_res["model"] == "openai/gpt-oss-20b"
 
     print(" [PASS] Model client generate works seamlessly with fallback and metrics.")
+
+
+def test_model_client_caps_requested_completion_tokens():
+    """Keep live requests below the provider's observed output-token-per-minute limit."""
+    response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content="A concise answer."))],
+        usage=SimpleNamespace(prompt_tokens=5, completion_tokens=3),
+    )
+    groq_client = MagicMock()
+    groq_client.chat.completions.create.return_value = response
+
+    with patch("engine.model_client.get_groq_client", return_value=groq_client):
+        result = generate("qwen/qwen3.8-27b", "Explain a concept.")
+
+    assert result["mock_fallback"] is False
+    assert result["text"] == "A concise answer."
+    assert groq_client.chat.completions.create.call_args.kwargs["max_completion_tokens"] == 900
 
 
 def test_telemetry_calculations():
@@ -188,12 +207,38 @@ def test_route_savings_aggregates_fallback_calls():
     assert tracker.total_output_tokens == 10
 
 
+def test_route_metadata_is_recorded_for_live_reports():
+    """Keep route metadata alongside costs so dashboards can report real session activity."""
+    tracker = TelemetryTracker()
+    tracker.calculate_route_savings(
+        [("openai/gpt-oss-20b", 12, 8)],
+        metadata={
+            "timestamp": "2026-10-10T12:00:00+00:00",
+            "latency_ms": 42.5,
+            "tier": 2,
+            "initial_model": "openai/gpt-oss-20b",
+            "final_model": "openai/gpt-oss-20b",
+            "fallback_triggered": False,
+            "mock_fallback": True,
+        },
+    )
+
+    row = tracker.query_history[0]
+    assert row["timestamp"] == "2026-10-10T12:00:00+00:00"
+    assert row["latency_ms"] == 42.5
+    assert row["tier"] == 2
+    assert row["fallback_triggered"] is False
+    assert row["mock_fallback"] is True
+
+
 if __name__ == "__main__":
     test_pricing_table()
     test_model_client_generate()
+    test_model_client_caps_requested_completion_tokens()
     test_telemetry_calculations()
     test_end_to_end_integration()
     test_route_savings_aggregates_fallback_calls()
+    test_route_metadata_is_recorded_for_live_reports()
     print("\n==========================================")
     print("ALL TESTS PASSED SUCCESSFULLY! (100% GREEN)")
     print("==========================================")

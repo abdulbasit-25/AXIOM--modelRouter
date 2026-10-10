@@ -25,6 +25,18 @@ when verification fails, and shows request latency and estimated cost.
 The **Fallback Demonstration** scenario intentionally exercises the router's
 verification escalation path.
 
+## Calibration and reporting
+
+**Calibration Studio** submits an editable evaluation prompt to the router and
+compares its selected tier with the expected tier you choose. Requests are real
+router runs and are included in session telemetry.
+
+**SDG Analytics** reports routed requests, recorded latency, model usage, token
+cost estimates, and savings versus the configured frontier-model pricing proxy.
+The dashboard and downloadable CSV cover the active Streamlit session only;
+they are operational proxies, not measured learning, access, or employment
+outcomes. Data is held in session memory and is not stored in a database.
+
 ## Verify
 
 Run the engine and router checks:

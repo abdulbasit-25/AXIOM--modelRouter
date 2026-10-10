@@ -28,6 +28,7 @@ SUPPORTED_MODELS: List[str] = [
     "qwen/qwen3.8-27b",
     "openai/gpt-oss-120b",
 ]
+MAX_COMPLETION_TOKENS = 900
 
 _cached_client: Any = None
 
@@ -133,6 +134,7 @@ def generate(
         response = groq_client.chat.completions.create(
             model=model_name,
             messages=messages,
+            max_completion_tokens=MAX_COMPLETION_TOKENS,
         )
         latency_ms = (time.perf_counter() - start_time) * 1000.0
 

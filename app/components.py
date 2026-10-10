@@ -65,21 +65,6 @@ def feature_card(title: str, body: str) -> None:
     )
 
 
-def plan_card(heading: str, body: str) -> None:
-    """Render a card for a planned (not yet live) capability."""
-    st.markdown(
-        (
-            '<div class="plan-card">'
-            '<div class="plan-kicker">Upcoming</div>'
-            f"<h4>{escape(heading)}</h4>"
-            f"<p>{escape(body)}</p>"
-            '<div class="plan-badge">No live data</div>'
-            "</div>"
-        ),
-        unsafe_allow_html=True,
-    )
-
-
 def steps_markup(steps: Sequence[tuple[str, str]]) -> str:
     items = "".join(
         f"<li><strong>{escape(title)}</strong> {escape(text)}</li>" for title, text in steps

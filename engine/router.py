@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from core import EducationalQueryClassifier, LightweightVerifier
@@ -125,8 +126,10 @@ class ProductionRouter:
             )
             final_model = FALLBACK_MODEL
 
-            logger.warning(
-                "Verification failed for Tier %d on model '%s' (Reason: %s). Escalating to '%s'.",
+            log_fallback = logger.info if force_fallback_demo else logger.warning
+            log_fallback(
+                "%s for Tier %d on model '%s' (Reason: %s). Escalating to '%s'.",
+                "Demonstration verification failure" if force_fallback_demo else "Verification failed",
                 tier,
                 initial_model,
                 fallback_reason,
@@ -162,6 +165,15 @@ class ProductionRouter:
         savings = self.telemetry.calculate_route_savings(
             model_calls=model_calls,
             track=True,
+            metadata={
+                "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "latency_ms": round(total_latency_ms, 2),
+                "tier": tier,
+                "initial_model": initial_model,
+                "final_model": final_model,
+                "fallback_triggered": fallback_triggered,
+                "mock_fallback": mock_fallback,
+            },
         )
 
         edtech_multiplier = self.telemetry.calculate_edtech_multiplier(

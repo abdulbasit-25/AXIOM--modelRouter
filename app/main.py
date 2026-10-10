@@ -1,6 +1,9 @@
 """Streamlit entry point for the integrated EduRoute tutoring app."""
 
 from collections.abc import Callable
+from datetime import datetime, timezone
+import csv
+from io import StringIO
 import logging
 from pathlib import Path
 import sys
@@ -21,7 +24,6 @@ if __package__ in (None, ""):
         mobile_brand,
         page_footer,
         page_header,
-        plan_card,
         routing_path_display,
         section_heading,
         status_indicator,
@@ -39,7 +41,6 @@ else:
         mobile_brand,
         page_footer,
         page_header,
-        plan_card,
         routing_path_display,
         section_heading,
         status_indicator,
@@ -117,7 +118,7 @@ def _mobile_menu() -> None:
             _nav_label(name),
             key=f"mobile_nav_{name}",
             type="primary" if name == current else "secondary",
-            use_container_width=True,
+            width="stretch",
         ):
             _set_destination(name)
     st.caption("The tutor is connected to the routing engine.")
@@ -179,10 +180,10 @@ def _render_welcome_page() -> None:
         )
         cta_left, cta_right = st.columns(2, gap="small")
         with cta_left:
-            if st.button("Open Production AI Tutor", type="primary", use_container_width=True, key="cta_tutor"):
+            if st.button("Open Production AI Tutor", type="primary", width="stretch", key="cta_tutor"):
                 _set_destination("Production AI Tutor")
         with cta_right:
-            if st.button("About EduRoute", use_container_width=True, key="cta_about"):
+            if st.button("About EduRoute", width="stretch", key="cta_about"):
                 _set_destination("About")
 
     with hero_right:
@@ -216,17 +217,17 @@ def _render_welcome_page() -> None:
         unsafe_allow_html=True,
     )
 
-    section_heading("Feature overview", "The tutor workflow is connected; calibration and impact reporting remain planned.")
+    section_heading("Feature overview", "Explore the tutor, evaluate routing behavior, and review live session telemetry.")
     features = (
         ("Production AI Tutor", "Route educational questions, review model responses, and inspect fallback and cost metrics."),
-        ("Calibration Studio", "A planned workspace for calibration and evaluation workflows that will guide routing decisions in future iterations."),
-        ("SDG Analytics", "A planned reporting workspace focused on SDG 4 and SDG 8, designed to surface impact insights when data becomes available."),
+        ("Calibration Studio", "Run editable examples through the router and compare its selected tier with your expected tier."),
+        ("SDG Analytics", "Review session-level education-support activity and cost-efficiency proxies from routed questions."),
     )
     with st.container(key="features"):
         for column, (heading, body) in zip(st.columns(3, gap="medium"), features):
             with column:
                 feature_card(heading, body)
-                if st.button(f"Open {heading}", key=f"feature_{heading}", use_container_width=True):
+                if st.button(f"Open {heading}", key=f"feature_{heading}", width="stretch"):
                     _set_destination(heading)
 
     section_heading("Getting started", "These steps help a first-time user understand the current prototype flow.")
@@ -252,7 +253,7 @@ def _render_scenario_picker() -> None:
                     f"**{title}**  \n{SCENARIO_DESCRIPTIONS[scenario_name]}",
                     key=f"scenario_{index}",
                     type="primary" if selected else "secondary",
-                    use_container_width=True,
+                    width="stretch",
                 ):
                     st.session_state["scenario"] = scenario_name
                     st.session_state["question_input"] = SCENARIOS[scenario_name]
@@ -393,62 +394,177 @@ def _render_tutor() -> None:
             metric_card(label, value, note)
 
 
-def _render_pending_destination(
-    eyebrow: str,
-    title: str,
-    description: str,
-    planned_sections: tuple[tuple[str, str], ...],
-) -> None:
-    page_header(eyebrow, title, description)
-    st.markdown(
-        """
-        <div class="planning-banner">
-            <div class="planning-pill">Planned</div>
-            <span>Backend integration is pending. This workspace is intentionally designed for future live reporting.</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    cards = st.columns(2, gap="medium")
-    for index, (heading, explanation) in enumerate(planned_sections):
-        with cards[index % 2]:
-            plan_card(heading, explanation)
-
-
 def _render_calibration_studio() -> None:
-    _render_pending_destination(
+    page_header(
         "Calibration Studio",
-        "Prepare routing calibration.",
-        "Review how educational tasks should be matched to model capability and response quality before any deployment decisions are made.",
-        (
-            (
-                "Calibration workflow",
-                "Future tools will support comparing task difficulty, response quality, and routing decisions with transparent controls and review states.",
-            ),
-            (
-                "Evaluation data",
-                "Dataset connections, calibration notes, and benchmark snapshots will appear here when available, without implying measured outcomes.",
-            ),
-        ),
+        "Check whether questions take the expected route.",
+        "Submit an evaluation prompt to the live router, compare its selected complexity tier with your expected tier, and inspect the resulting route and cost.",
     )
+    st.info(
+        "Each evaluation makes a real router request and is included in session analytics. "
+        "Without GROQ_API_KEY, the router uses its clearly labeled local mock response."
+    )
+
+    with st.form("calibration_form"):
+        prompt = st.text_area(
+            "Evaluation question",
+            value="Explain the difference between mitosis and meiosis, including their outcomes.",
+            max_chars=MAX_QUESTION_CHARS,
+            key="calibration_prompt",
+        )
+        expected_tier = st.selectbox(
+            "Expected complexity tier",
+            options=(1, 2, 3),
+            format_func=lambda tier: {
+                1: "Tier 1 · Factual recall",
+                2: "Tier 2 · Conceptual explanation",
+                3: "Tier 3 · Multi-step reasoning",
+            }[tier],
+            key="calibration_expected_tier",
+        )
+        submitted = st.form_submit_button(
+            "Evaluate route",
+            type="primary",
+            key="run_calibration",
+        )
+
+    if submitted:
+        if not prompt.strip():
+            st.warning("Enter an evaluation question before running calibration.")
+        else:
+            try:
+                with st.spinner("Running the evaluation through the router..."):
+                    result = _get_router().route_and_execute(prompt.strip())
+                record = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "expected_tier": expected_tier,
+                    "actual_tier": result["tier"],
+                    "tier_match": expected_tier == result["tier"],
+                    "initial_model": result["initial_model"],
+                    "final_model": result["final_model"],
+                    "fallback_triggered": result["fallback_triggered"],
+                    "mock_fallback": result["mock_fallback"],
+                    "latency_ms": result["latency_ms"],
+                    "actual_cost": result["impact_metrics"]["actual_cost"],
+                }
+                st.session_state.setdefault("calibration_results", []).append(record)
+                st.session_state["latest_calibration"] = record
+                st.session_state.pop("calibration_error", None)
+            except Exception:
+                logger.exception("Calibration evaluation failed")
+                st.session_state["calibration_error"] = (
+                    "The evaluation could not be completed. Check the application logs."
+                )
+
+    if error_message := st.session_state.get("calibration_error"):
+        st.error(error_message)
+
+    latest = st.session_state.get("latest_calibration")
+    if latest:
+        if latest["tier_match"]:
+            st.success(f"Tier agreement: expected and selected Tier {latest['actual_tier']}.")
+        else:
+            st.warning(
+                f"Tier mismatch: expected Tier {latest['expected_tier']}, "
+                f"router selected Tier {latest['actual_tier']}."
+            )
+        st.write(
+            f"Route: {latest['initial_model']} → {latest['final_model']} · "
+            f"{'escalated' if latest['fallback_triggered'] else 'no escalation'} · "
+            f"{'simulated' if latest['mock_fallback'] else 'live'}"
+        )
+
+    calibration_results = st.session_state.get("calibration_results", [])
+    if calibration_results:
+        section_heading("Evaluation history", "Tier agreement reflects the expected tier you supplied; it is not a response-quality score.")
+        st.dataframe(calibration_results, width="stretch", hide_index=True)
+        matches = sum(item["tier_match"] for item in calibration_results)
+        st.caption(f"{matches} of {len(calibration_results)} evaluations matched the expected tier.")
+    else:
+        empty_state(
+            "No evaluations yet",
+            "Run an evaluation above to see the router's selected tier and route details.",
+            "◎",
+        )
 
 
 def _render_sdg_analytics() -> None:
-    _render_pending_destination(
+    page_header(
         "SDG Analytics",
-        "Measure impact when data is ready.",
-        "A planned reporting workspace for SDG 4 and SDG 8 indicators, explaining how impact insights will be surfaced when the data pipeline exists.",
-        (
-            (
-                "Quality education · SDG 4",
-                "Future reporting may summarize access, learning-quality, and educational-support indicators in a transparent, explainable way.",
-            ),
-            (
-                "Decent work · SDG 8",
-                "Future dashboards may compare efficiency and affordability signals once live operational data is connected.",
-            ),
-        ),
+        "See what the router is doing in this session.",
+        "Live operational metrics from completed tutor and calibration requests, including query volume, latency, model usage, and estimated cost.",
+    )
+    telemetry = _get_router().telemetry
+    rows = telemetry.query_history
+    summary = telemetry.get_session_summary()
+    latencies = [row["latency_ms"] for row in rows if "latency_ms" in row]
+    average_latency = sum(latencies) / len(latencies) if latencies else 0.0
+    fallback_count = sum(bool(row.get("fallback_triggered")) for row in rows)
+
+    st.caption(
+        "Session-scoped operational proxies only. Query counts do not measure learning outcomes "
+        "or access; savings compare estimated token cost with the configured frontier-model proxy."
+    )
+    metrics = (
+        ("Routed questions", str(summary["total_queries"]), "Current Streamlit session"),
+        ("Average latency", f"{average_latency:.0f} ms" if latencies else "—", "Recorded model-call latency"),
+        ("Estimated spend", f"${summary['cumulative_spend']:.6f}", "Based on configured token pricing"),
+        ("Estimated savings", f"${summary['cumulative_dollars_saved']:.6f}", "Versus configured baseline proxy"),
+    )
+    for column, (label, value, note) in zip(st.columns(4, gap="medium"), metrics):
+        with column:
+            metric_card(label, value, note)
+
+    if not rows:
+        empty_state(
+            "No session data yet",
+            "Run a tutor question or calibration evaluation to populate live analytics.",
+            "◔",
+        )
+        return
+
+    chart_column, breakdown_column = st.columns(2, gap="medium")
+    with chart_column:
+        section_heading("Model usage", "Counts include each model call; escalated requests count both models.")
+        model_counts: dict[str, int] = {}
+        for row in rows:
+            for model in row.get("models", []):
+                model_counts[model] = model_counts.get(model, 0) + 1
+        st.bar_chart(model_counts)
+    with breakdown_column:
+        section_heading("Routing and efficiency")
+        st.metric("Fallback rate", f"{fallback_count / len(rows) * 100:.1f}%")
+        st.metric("Estimated savings vs baseline", f"{summary['overall_savings_pct']:.1f}%")
+        st.metric("Input / output tokens", f"{summary['total_input_tokens']:,} / {summary['total_output_tokens']:,}")
+
+    section_heading("Request history", "Detailed estimates are local to this active Streamlit session.")
+    display_rows = [
+        {
+            "Timestamp (UTC)": row.get("timestamp", ""),
+            "Tier": row.get("tier", ""),
+            "Route": " -> ".join(row.get("models", [])),
+            "Latency (ms)": row.get("latency_ms", ""),
+            "Escalated": row.get("fallback_triggered", False),
+            "Simulated": row.get("mock_fallback", False),
+            "Input tokens": row["in_tokens"],
+            "Output tokens": row["out_tokens"],
+            "Estimated cost (USD)": row["actual_cost"],
+            "Baseline proxy (USD)": row["baseline_cost"],
+            "Estimated savings (USD)": row["dollars_saved"],
+        }
+        for row in reversed(rows)
+    ]
+    st.dataframe(display_rows, width="stretch", hide_index=True)
+
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=list(display_rows[0]))
+    writer.writeheader()
+    writer.writerows(display_rows)
+    st.download_button(
+        "Download session report (CSV)",
+        data=output.getvalue(),
+        file_name="eduroute-session-report.csv",
+        mime="text/csv",
     )
 
 
@@ -461,7 +577,7 @@ def _render_about_page() -> None:
 
     info_section(
         "About the Project",
-        "EduRoute helps students ask learning questions and routes them through a structured workflow. The Production AI Tutor integrates classification, model selection, response verification, fallback escalation, and per-request telemetry. Calibration Studio and SDG Analytics remain planned workspaces.",
+        "EduRoute helps students ask learning questions and routes them through a structured workflow. The Production AI Tutor integrates classification, model selection, response verification, fallback escalation, and per-request telemetry. Calibration Studio compares router tiers with user-provided expectations, and SDG Analytics summarizes session-level operational proxies.",
     )
     info_section("About the Team", placeholder="Team information will be added here.")
     info_section(
