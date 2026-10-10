@@ -14,11 +14,12 @@ BRAND_DESCRIPTION = (
 )
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
-BRAND_LOGO_PATH = ASSETS_DIR / "axiom-logo.svg"
-BRAND_MARK_PATH = ASSETS_DIR / "axiom-mark.svg"
+BRAND_LOGO_PATH = ASSETS_DIR / "Logo.png"
+BRAND_MARK_PATH = ASSETS_DIR / "android-chrome-192x192.png"
+FAVICON_PATH = ASSETS_DIR / "favicon-32x32.png"
 
 PAGE_TITLE = "Axiom — Intelligence, Routed with Purpose"
-PAGE_ICON = str(BRAND_MARK_PATH)
+PAGE_ICON = str(FAVICON_PATH)
 
 NAVIGATION = (
     "Welcome",

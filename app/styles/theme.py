@@ -733,17 +733,29 @@ APP_CSS = (
     .st-key-scenario_grid .stButton > button[kind="primary"] p strong,
     .st-key-scenario_grid .stButton > button[data-testid="stBaseButton-primary"] p strong { color: var(--primary-strong) !important; }
 
+    .st-key-scenario_grid .stButton > button[data-testid="stBaseButton-primary"]:hover,
+    .st-key-scenario_grid .stButton > button[kind="primary"]:hover {
+        background: var(--primary-soft) !important;
+        border-color: var(--primary) !important;
+        color: var(--text) !important;
+    }
+
+    .st-key-scenario_grid .stButton > button[data-testid="stBaseButton-primary"]:hover *,
+    .st-key-scenario_grid .stButton > button[kind="primary"]:hover * {
+        color: var(--text-2) !important;
+    }
+
     /* 8. Inputs */
     .stTextInput > div > div, .stTextArea > div > div,
     .stSelectbox > div > div, .stNumberInput > div > div {
-        background: #ffffff;
+        background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--r-md);
     }
 
     [data-testid="stTextArea"] textarea, [data-testid="stTextInput"] input,
     [data-testid="stNumberInput"] input {
-        background: #ffffff !important;
+        background: var(--surface) !important;
         color: var(--text) !important;
         border-radius: var(--r-md);
         line-height: 1.6;
@@ -758,6 +770,70 @@ APP_CSS = (
     [data-testid="stTextArea"] > div > div:focus-within {
         border-color: var(--accent);
         box-shadow: 0 0 0 3px rgba(130, 145, 145, 0.3);
+    }
+
+    [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+    [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+        background: var(--surface);
+        color: var(--text);
+    }
+
+    [data-baseweb="popover"] [role="listbox"],
+    [data-baseweb="popover"] [role="option"] {
+        background-color: var(--surface);
+        color: var(--text) !important;
+    }
+
+    [data-baseweb="popover"] [role="option"]:hover,
+    [data-baseweb="popover"] [role="option"][aria-selected="true"] {
+        background-color: var(--primary-soft) !important;
+        color: var(--text) !important;
+    }
+
+    [data-testid="stExpander"] summary:hover,
+    [data-testid="stExpander"] summary:hover * {
+        background-color: var(--primary-soft);
+        color: var(--text) !important;
+    }
+
+    [data-testid="stMain"] a,
+    [data-testid="stMain"] a:visited { color: var(--brand-primary) !important; }
+
+    [data-testid="stMain"] a:hover,
+    [data-testid="stMain"] a:hover * {
+        color: var(--brand-primary) !important;
+        text-decoration-color: var(--brand-primary);
+    }
+
+    [data-testid="stMain"] .stButton > button:not([data-testid="stBaseButton-primary"]):hover,
+    [data-testid="stMain"] .stButton > button:not([kind="primary"]):hover,
+    [data-testid="stMain"] .stDownloadButton > button:hover {
+        background: var(--primary-soft) !important;
+        border-color: var(--brand-primary) !important;
+        color: var(--text) !important;
+    }
+
+    [data-testid="stMain"] .stButton > button:not([data-testid="stBaseButton-primary"]):hover *,
+    [data-testid="stMain"] .stButton > button:not([kind="primary"]):hover *,
+    [data-testid="stMain"] .stDownloadButton > button:hover * {
+        color: var(--text) !important;
+    }
+
+    [data-testid="stMain"] .stButton > button[data-testid="stBaseButton-primary"]:hover,
+    [data-testid="stMain"] .stButton > button[kind="primary"]:hover {
+        background: var(--primary-strong) !important;
+        border-color: var(--primary-strong) !important;
+        color: #ffffff !important;
+    }
+
+    [data-testid="stMain"] .stButton > button[data-testid="stBaseButton-primary"]:hover *,
+    [data-testid="stMain"] .stButton > button[kind="primary"]:hover * {
+        color: #ffffff !important;
+    }
+
+    [data-testid="stMain"] .stButton > button:disabled,
+    [data-testid="stMain"] .stDownloadButton > button:disabled {
+        color: var(--text-2) !important;
     }
 
     button:focus-visible, [role="radio"]:focus-visible {
@@ -836,6 +912,19 @@ APP_CSS = (
     .route-title { color: var(--text) !important; font-size: 0.95rem; font-weight: 700; line-height: 1.9rem; }
     .route-hint { color: var(--text-3) !important; font-size: 0.84rem; line-height: 1.5; margin-top: -0.2rem; }
     .route-note { font-size: 0.82rem; margin-top: 0.3rem; }
+
+    .feature-card:hover,
+    .team-card:hover {
+        background-color: var(--surface);
+        color: var(--text);
+    }
+
+    .feature-card:hover .feature-title,
+    .feature-card:hover p,
+    .team-card:hover .team-name,
+    .team-card:hover .team-role {
+        color: var(--text) !important;
+    }
 
     /* 10. Mobile top bar + hamburger (hidden on desktop) */
     .st-key-mobile_nav { display: none; }
