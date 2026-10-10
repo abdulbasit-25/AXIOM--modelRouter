@@ -1,22 +1,28 @@
-"""EduRoute branding components."""
+"""Shared Axiom brand components."""
 
 import streamlit as st
+
+from app.config import (
+    BRAND_LOGO_PATH,
+    BRAND_MARK_PATH,
+    BRAND_TAGLINE,
+    BRAND_WORDMARK,
+)
 
 
 def brand_lockup() -> None:
     """Render the sidebar brand block."""
-    st.markdown(
-        '<div class="brand-shell"><div class="brand-mark">E</div><div>'
-        '<div class="brand-name">EduRoute</div>'
-        '<div class="brand-tagline">Learning, thoughtfully routed.</div>'
-        "</div></div>",
-        unsafe_allow_html=True,
+    st.image(
+        BRAND_LOGO_PATH,
+        width="stretch",
+        alt=f"{BRAND_WORDMARK} — {BRAND_TAGLINE}",
     )
 
 
 def mobile_brand() -> None:
     """Render the compact mobile brand."""
+    st.image(BRAND_MARK_PATH, width=30, alt="")
     st.markdown(
-        '<div class="mobile-brand"><div class="mini-brand-mark">E</div>EduRoute</div>',
+        f'<span class="mobile-brand-name">{BRAND_WORDMARK}</span>',
         unsafe_allow_html=True,
     )
