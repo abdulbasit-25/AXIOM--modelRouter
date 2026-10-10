@@ -1,6 +1,6 @@
 """Global application theme and design tokens."""
 
 from app.styles.theme import APP_CSS, apply_theme
-from app.styles.tokens import CSS_VARIABLES
+from app.styles.tokens import BRAND_COLORS, CSS_VARIABLES
 
-__all__ = ["APP_CSS", "CSS_VARIABLES", "apply_theme"]
+__all__ = ["APP_CSS", "BRAND_COLORS", "CSS_VARIABLES", "apply_theme"]
