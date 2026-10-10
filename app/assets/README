@@ -1,0 +1,5 @@
+This directory contains Axiom's SVG brand assets:
+
+- axiom-logo.svg: full wordmark and tagline for the sidebar.
+- axiom-mark.svg: standalone mark used as the Streamlit page icon and in the
+  compact mobile navigation.
