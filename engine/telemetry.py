@@ -9,22 +9,22 @@ Tracks:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 
 # Exact pricing per 1,000,000 tokens (USD)
 PRICING_PER_1M: Dict[str, Dict[str, float]] = {
-    "llama-3.1-8b-instant": {
-        "input": 0.05,
-        "output": 0.08,
+    "openai/gpt-oss-20b": {
+        "input": 0.075,
+        "output": 0.30,
     },
     "qwen/qwen3.8-27b": {
         "input": 0.80,
         "output": 4.00,
     },
-    "llama-3.3-70b-versatile": {
-        "input": 0.59,
-        "output": 0.79,
+    "openai/gpt-oss-120b": {
+        "input": 0.15,
+        "output": 0.60,
     },
     "Frontier Baseline (GPT-4o proxy)": {
         "input": 2.50,
@@ -123,27 +123,49 @@ class TelemetryTracker:
             SavingsResult: Dict-like object supporting unpacking of
             (actual_cost, baseline_cost, dollars_saved, savings_pct).
         """
-        if model_name not in self.pricing:
-            raise ValueError(
-                f"Model '{model_name}' not found in pricing configuration. "
-                f"Supported models: {list(self.pricing.keys())}"
-            )
+        return self.calculate_route_savings(
+            [(model_name, in_tokens, out_tokens)],
+            track=track,
+        )
 
+    def calculate_route_savings(
+        self,
+        model_calls: Sequence[tuple[str, int, int]],
+        track: bool = True,
+    ) -> SavingsResult:
+        """Calculate aggregate costs for all model calls made for one routed query."""
+        if not model_calls:
+            raise ValueError("At least one model call is required to calculate savings.")
         if self.baseline_model not in self.pricing:
             raise ValueError(
                 f"Baseline model '{self.baseline_model}' not found in pricing configuration."
             )
 
-        model_rates = self.pricing[model_name]
         baseline_rates = self.pricing[self.baseline_model]
+        actual_cost = 0.0
+        baseline_cost = 0.0
+        in_tokens = 0
+        out_tokens = 0
+        models: List[str] = []
 
-        actual_cost = (
-            in_tokens * model_rates["input"] + out_tokens * model_rates["output"]
-        ) / 1_000_000.0
-
-        baseline_cost = (
-            in_tokens * baseline_rates["input"] + out_tokens * baseline_rates["output"]
-        ) / 1_000_000.0
+        for model_name, call_in_tokens, call_out_tokens in model_calls:
+            if model_name not in self.pricing:
+                raise ValueError(
+                    f"Model '{model_name}' not found in pricing configuration. "
+                    f"Supported models: {list(self.pricing.keys())}"
+                )
+            model_rates = self.pricing[model_name]
+            actual_cost += (
+                call_in_tokens * model_rates["input"]
+                + call_out_tokens * model_rates["output"]
+            ) / 1_000_000.0
+            baseline_cost += (
+                call_in_tokens * baseline_rates["input"]
+                + call_out_tokens * baseline_rates["output"]
+            ) / 1_000_000.0
+            in_tokens += call_in_tokens
+            out_tokens += call_out_tokens
+            models.append(model_name)
 
         dollars_saved = baseline_cost - actual_cost
         savings_pct = (
@@ -159,7 +181,8 @@ class TelemetryTracker:
             self.total_output_tokens += out_tokens
             self.query_history.append(
                 {
-                    "model": model_name,
+                    "model": " -> ".join(models),
+                    "models": models,
                     "in_tokens": in_tokens,
                     "out_tokens": out_tokens,
                     "actual_cost": actual_cost,

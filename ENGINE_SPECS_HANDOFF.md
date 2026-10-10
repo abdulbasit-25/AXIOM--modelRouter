@@ -20,9 +20,9 @@ Handles interaction with Groq LLM inference endpoints. Measures exact execution 
 - **`SUPPORTED_MODELS`** (`List[str]`):
   ```python
   SUPPORTED_MODELS = [
-      "llama-3.1-8b-instant",
+      "openai/gpt-oss-20b",
       "qwen/qwen3.8-27b",
-      "llama-3.3-70b-versatile",
+      "openai/gpt-oss-120b",
   ]
   ```
 - **`_cached_client`** (`Any`): Internal singleton cache for the Groq client instance.
@@ -72,9 +72,9 @@ Pricing is calibrated per **1,000,000 tokens (USD)**:
 
 | Model Identifier | Input Rate ($/1M) | Output Rate ($/1M) |
 | :--- | :--- | :--- |
-| `llama-3.1-8b-instant` | **$0.05** | **$0.08** |
+| `openai/gpt-oss-20b` | **$0.075** | **$0.30** |
 | `qwen/qwen3.8-27b` | **$0.80** | **$4.00** |
-| `llama-3.3-70b-versatile` | **$0.59** | **$0.79** |
+| `openai/gpt-oss-120b` | **$0.15** | **$0.60** |
 | `Frontier Baseline (GPT-4o proxy)` | **$2.50** | **$10.00** |
 
 - **`PRICING_PER_1M`** (`Dict[str, Dict[str, float]]`): Global dictionary mapping model name to `{"input": float, "output": float}`.
@@ -145,12 +145,12 @@ Wires query classification, multi-model execution, heuristic output verification
 ### Tier Architecture Mapping
 ```python
 TIER_MODEL_MAP = {
-    1: "llama-3.1-8b-instant",  # Meta fast SLM (Factual recall / Definitions)
+    1: "openai/gpt-oss-20b",  # OpenAI GPT OSS 20B (Factual recall / Definitions)
     2: "qwen/qwen3.8-27b",      # Alibaba structured synthesis (Explanations & Comparisons)
-    3: "llama-3.1-8b-instant",  # Speculative fast attempt (Complex reasoning & Proofs)
+    3: "openai/gpt-oss-20b",  # Speculative fast attempt (Complex reasoning & Proofs)
 }
 
-FALLBACK_MODEL = "llama-3.3-70b-versatile"  # Frontier-class reasoning model
+FALLBACK_MODEL = "openai/gpt-oss-120b"  # Frontier-class reasoning model
 ```
 
 ### Class `ProductionRouter`
@@ -170,13 +170,13 @@ FALLBACK_MODEL = "llama-3.3-70b-versatile"  # Frontier-class reasoning model
   **Step-by-Step Flow**:
   1. **Classify**: Invokes `classifier.classify(prompt)` $\rightarrow$ Tier 1, 2, or 3.
   2. **Select Target Architecture**:
-     - Tier 1: `llama-3.1-8b-instant`
+     - Tier 1: `openai/gpt-oss-20b`
      - Tier 2: `qwen/qwen3.8-27b`
-     - Tier 3: `llama-3.1-8b-instant` (speculative fast attempt)
+     - Tier 3: `openai/gpt-oss-20b` (speculative fast attempt)
   3. **Execute Initial Inference**: Runs `model_client.generate(initial_model, prompt)`.
   4. **Output Verification**: Evaluates candidate response via `verifier.verify(prompt, response, tier)`. If `force_fallback_demo=True`, forces failure.
   5. **Automated Fallback Escalation**: If verification fails:
-     - Immediately re-routes prompt to `llama-3.3-70b-versatile`.
+     - Immediately re-routes prompt to `openai/gpt-oss-120b`.
      - Sets `fallback_triggered = True` and records diagnostic failure reason.
   6. **Telemetry & Impact**: Computes financial metrics via `telemetry.calculate_savings()` and records session stats.
   - **Return Schema**:
@@ -251,17 +251,17 @@ router = ProductionRouter()
 # Scenario A: Tier 1 Factual
 result_1 = router.route_and_execute("What is the boiling point of water?")
 print(f"Tier: {result_1['tier']}, Model: {result_1['final_model']}")
-# -> Tier: 1, Model: llama-3.1-8b-instant
+# -> Tier: 1, Model: openai/gpt-oss-20b
 
 # Scenario B: Tier 2 Conceptual
 result_2 = router.route_and_execute("Explain the difference between renewable and non-renewable energy.")
 print(f"Tier: {result_2['tier']}, Model: {result_2['final_model']}")
 # -> Tier: 2, Model: qwen/qwen3.8-27b
 
-# Scenario C: Tier 3 Complex Proof (Speculative attempt -> Escalates to 70B)
+# Scenario C: Tier 3 Complex Proof (Speculative attempt -> Escalates to GPT OSS 120B)
 result_3 = router.route_and_execute("Prove by mathematical induction that 1 + 2 + ... + n = n(n+1)/2.")
 print(f"Tier: {result_3['tier']}, Final Model: {result_3['final_model']}, Fallback: {result_3['fallback_triggered']}")
-# -> Tier: 3, Final Model: llama-3.3-70b-versatile, Fallback: True
+# -> Tier: 3, Final Model: openai/gpt-oss-120b, Fallback: True
 ```
 
 ### Example 2: Inspecting Financial Impact & EdTech Multiplier

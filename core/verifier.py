@@ -105,7 +105,7 @@ class LightweightVerifier:
                     reason=(
                         f"Tier 3 speculative response failed verification: "
                         f"Insufficient reasoning depth ({word_count} words) or missing step-by-step proof markers. "
-                        f"Requires escalation to 70B frontier architecture."
+                        f"Requires escalation to a larger reasoning model."
                     ),
                 )
 

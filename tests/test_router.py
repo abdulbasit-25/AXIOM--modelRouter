@@ -1,13 +1,16 @@
 """Terminal test demonstrating ProductionRouter capabilities.
 
 Demonstrates:
-(1) Tier 1 direct routing to Llama-8B (Factual recall)
+(1) Tier 1 direct routing to GPT OSS 20B (Factual recall)
 (2) Tier 2 direct routing to Qwen-27B (Conceptual explanation & structured synthesis)
-(3) Tier 3 speculative execution failing verifier and escalating to Llama-70B
+(3) Tier 3 speculative execution failing verifier and escalating to GPT OSS 120B
 """
 
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 # Ensure repository root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -23,7 +26,7 @@ def run_demonstration():
     router = ProductionRouter()
 
     # -------------------------------------------------------------------------
-    # DEMO 1: Tier 1 Direct Routing -> Llama-8B (Meta Fast SLM)
+    # DEMO 1: Tier 1 Direct Routing -> GPT OSS 20B
     # -------------------------------------------------------------------------
     print("\n[SCENARIO 1] Tier 1: Factual Recall Query")
     tier1_prompt = "What is the speed of light in a vacuum and who first measured it?"
@@ -43,13 +46,13 @@ def run_demonstration():
 
     # Assertions for Scenario 1
     assert res1["tier"] == 1, f"Expected Tier 1, got {res1['tier']}"
-    assert res1["initial_model"] == "llama-3.1-8b-instant"
-    assert res1["final_model"] == "llama-3.1-8b-instant"
+    assert res1["initial_model"] == "openai/gpt-oss-20b"
+    assert res1["final_model"] == "openai/gpt-oss-20b"
     assert res1["fallback_triggered"] is False
-    print("  [SUCCESS] Tier 1 directly routed to Llama-8B without fallback escalation.")
+    print("  [SUCCESS] Tier 1 directly routed to GPT OSS 20B without fallback escalation.")
 
     # -------------------------------------------------------------------------
-    # DEMO 2: Tier 2 Direct Routing -> Qwen-27B (Alibaba Structured Synthesis)
+    # DEMO 2: Tier 2 Direct Routing -> Qwen 3.8 27B
     # -------------------------------------------------------------------------
     print("\n" + "-" * 80)
     print("[SCENARIO 2] Tier 2: Conceptual Explanation & Synthesis Query")
@@ -76,10 +79,10 @@ def run_demonstration():
     print("  [SUCCESS] Tier 2 directly routed to Qwen-27B without fallback escalation.")
 
     # -------------------------------------------------------------------------
-    # DEMO 3: Tier 3 Speculative Attempt Failing Verifier -> Escalate to Llama-70B
+    # DEMO 3: Tier 3 Speculative Attempt Failing Verifier -> Escalate to GPT OSS 120B
     # -------------------------------------------------------------------------
     print("\n" + "-" * 80)
-    print("[SCENARIO 3] Tier 3: Complex Multi-step Proof failing Verifier & Escalating to Llama-70B")
+    print("[SCENARIO 3] Tier 3: Complex Multi-step Proof failing Verifier & Escalating to GPT OSS 120B")
     tier3_prompt = "Prove by mathematical induction that for all positive integers n, 1 + 2 + ... + n = n(n + 1)/2."
     print(f"Prompt: \"{tier3_prompt}\"")
 
@@ -100,10 +103,10 @@ def run_demonstration():
 
     # Assertions for Scenario 3
     assert res3["tier"] == 3, f"Expected Tier 3, got {res3['tier']}"
-    assert res3["initial_model"] == "llama-3.1-8b-instant"
-    assert res3["final_model"] == "llama-3.3-70b-versatile"
+    assert res3["initial_model"] == "openai/gpt-oss-20b"
+    assert res3["final_model"] == "openai/gpt-oss-120b"
     assert res3["fallback_triggered"] is True
-    print("  [SUCCESS] Tier 3 speculative attempt failed verification and successfully escalated to Llama-70B.")
+    print("  [SUCCESS] Tier 3 speculative attempt failed verification and successfully escalated to GPT OSS 120B.")
 
     # -------------------------------------------------------------------------
     # Bonus Check: Explicit force_fallback_demo flag test
@@ -112,7 +115,7 @@ def run_demonstration():
     print("[SCENARIO 4] Explicit force_fallback_demo=True Test on Tier 1 Prompt")
     res_forced = router.route_and_execute("What is DNA?", force_fallback_demo=True)
     assert res_forced["fallback_triggered"] is True
-    assert res_forced["final_model"] == "llama-3.3-70b-versatile"
+    assert res_forced["final_model"] == "openai/gpt-oss-120b"
     print("  [SUCCESS] force_fallback_demo=True correctly forced verification failure and escalated.")
 
     # -------------------------------------------------------------------------

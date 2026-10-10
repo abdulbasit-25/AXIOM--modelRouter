@@ -112,7 +112,7 @@ def page_footer() -> None:
         '<div class="page-footer"><div class="footer-brand"><div class="mini-brand-mark">E</div>'
         '<div><div class="mini-brand-text">EduRoute</div>'
         '<div class="footer-tagline">Learning, thoughtfully routed.</div></div></div>'
-        f'<div class="footer-links">{chip("Frontend prototype")}{chip("No live AI")}</div></div>',
+        f'<div class="footer-links">{chip("Integrated routing")}{chip("Transparent telemetry")}</div></div>',
         unsafe_allow_html=True,
     )
 

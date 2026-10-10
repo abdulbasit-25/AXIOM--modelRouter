@@ -1,6 +1,6 @@
 """Core routing, classification, and verification components."""
 
-from core.classifer import EducationalQueryClassifier
+from core.classifier import EducationalQueryClassifier
 from core.verifier import LightweightVerifier, VerificationResult
 
 __all__ = [

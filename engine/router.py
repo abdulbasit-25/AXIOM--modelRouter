@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 
 # Architecture mapping per query complexity tier
 TIER_MODEL_MAP: Dict[int, str] = {
-    1: "llama-3.1-8b-instant",       # Meta fast SLM (Factual Recall / Definitions)
+    1: "openai/gpt-oss-20b",         # Fast model (Factual Recall / Definitions)
     2: "qwen/qwen3.8-27b",           # Alibaba structured synthesis (Conceptual Explanations)
-    3: "llama-3.1-8b-instant",       # Speculative fast attempt (Complex Reasoning / Proofs)
+    3: "openai/gpt-oss-20b",         # Speculative fast attempt (Complex Reasoning / Proofs)
 }
 
-FALLBACK_MODEL: str = "llama-3.3-70b-versatile"  # Frontier-class escalation model
+FALLBACK_MODEL: str = "openai/gpt-oss-120b"  # Frontier-class escalation model
 
 
 class ProductionRouter:
@@ -89,6 +89,8 @@ class ProductionRouter:
         total_latency_ms = initial_result["latency_ms"]
         in_tokens = initial_result["input_tokens"]
         out_tokens = initial_result["output_tokens"]
+        model_calls = [(initial_model, in_tokens, out_tokens)]
+        mock_fallback = bool(initial_result.get("mock_fallback", False))
 
         # Step 4: Verify output via LightweightVerifier
         if force_fallback_demo:
@@ -145,12 +147,20 @@ class ProductionRouter:
             total_latency_ms += escalated_result["latency_ms"]
             in_tokens += escalated_result["input_tokens"]
             out_tokens += escalated_result["output_tokens"]
+            model_calls.append(
+                (
+                    final_model,
+                    escalated_result["input_tokens"],
+                    escalated_result["output_tokens"],
+                )
+            )
+            mock_fallback = mock_fallback or bool(
+                escalated_result.get("mock_fallback", False)
+            )
 
         # Step 6: Compute cost savings and update telemetry
-        savings = self.telemetry.calculate_savings(
-            model_name=final_model,
-            in_tokens=in_tokens,
-            out_tokens=out_tokens,
+        savings = self.telemetry.calculate_route_savings(
+            model_calls=model_calls,
             track=True,
         )
 
@@ -177,6 +187,7 @@ class ProductionRouter:
             "initial_model": initial_model,
             "final_model": final_model,
             "fallback_triggered": fallback_triggered,
+            "mock_fallback": mock_fallback,
             "latency_ms": round(total_latency_ms, 2),
             "impact_metrics": impact_metrics,
         }

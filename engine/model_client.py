@@ -1,9 +1,9 @@
 """Model client infrastructure for Groq LLMs.
 
 Supports:
-- 'llama-3.1-8b-instant'
+- 'openai/gpt-oss-20b'
 - 'qwen/qwen3.8-27b'
-- 'llama-3.3-70b-versatile'
+- 'openai/gpt-oss-120b'
 
 Provides wall-clock latency tracking and safe mock fallback when
 GROQ_API_KEY is not configured or in case of client/network errors.
@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 # Supported model identifiers
 SUPPORTED_MODELS: List[str] = [
-    "llama-3.1-8b-instant",
+    "openai/gpt-oss-20b",
     "qwen/qwen3.8-27b",
-    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
 ]
 
 _cached_client: Any = None
@@ -85,6 +85,7 @@ def _mock_generate(
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
         "model": model_name,
+        "mock_fallback": True,
     }
 
 
@@ -96,8 +97,8 @@ def generate(
     """Generate completion using Groq LLM or safe mock fallback.
 
     Args:
-        model_name: Target model identifier ('llama-3.1-8b-instant',
-            'qwen/qwen3.8-27b', 'llama-3.3-70b-versatile').
+        model_name: Target model identifier ('openai/gpt-oss-20b',
+            'qwen/qwen3.8-27b', 'openai/gpt-oss-120b').
         prompt: User prompt content.
         system_prompt: Optional system prompt instructions.
 
@@ -156,6 +157,7 @@ def generate(
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
             "model": model_name,
+            "mock_fallback": False,
         }
 
     except Exception as exc:

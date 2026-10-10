@@ -66,7 +66,7 @@ All files currently created and active in the repository:
 #### Module-Level Variables & Constants
 | Variable Name | Type | Value / Default | Description |
 | :--- | :--- | :--- | :--- |
-| `SUPPORTED_MODELS` | `List[str]` | `["llama-3.1-8b-instant", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile"]` | List of supported model identifiers. |
+| `SUPPORTED_MODELS` | `List[str]` | `["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "openai/gpt-oss-120b"]` | List of supported model identifiers. |
 | `_cached_client` | `Any` | `None` | Internal singleton cache for the initialized `groq.Groq` client. |
 | `client` | `Optional[Groq]` | `get_groq_client()` | Module-level Groq client instance initialized if `GROQ_API_KEY` exists. |
 
@@ -127,17 +127,17 @@ Convenience class wrapping `generate()`.
   Exact pricing per 1,000,000 tokens (USD):
   ```python
   PRICING_PER_1M = {
-      "llama-3.1-8b-instant": {
-          "input": 0.05,
-          "output": 0.08,
+      "openai/gpt-oss-20b": {
+          "input": 0.075,
+          "output": 0.30,
       },
       "qwen/qwen3.8-27b": {
           "input": 0.80,
           "output": 4.00,
       },
-      "llama-3.3-70b-versatile": {
-          "input": 0.59,
-          "output": 0.79,
+      "openai/gpt-oss-120b": {
+          "input": 0.15,
+          "output": 0.60,
       },
       "Frontier Baseline (GPT-4o proxy)": {
           "input": 2.50,
@@ -263,12 +263,12 @@ Tracks per-query and cumulative session metrics.
 #### Module-Level Variables & Constants
 ```python
 TIER_MODEL_MAP: Dict[int, str] = {
-    1: "llama-3.1-8b-instant",  # Meta fast SLM (Factual Recall & Definitions)
+    1: "openai/gpt-oss-20b",  # OpenAI GPT OSS 20B (Factual Recall & Definitions)
     2: "qwen/qwen3.8-27b",      # Alibaba structured synthesis (Conceptual Explanations)
-    3: "llama-3.1-8b-instant",  # Speculative fast attempt (Complex Reasoning & Proofs)
+    3: "openai/gpt-oss-20b",  # Speculative fast attempt (Complex Reasoning & Proofs)
 }
 
-FALLBACK_MODEL: str = "llama-3.3-70b-versatile"  # Frontier-class reasoning model
+FALLBACK_MODEL: str = "openai/gpt-oss-120b"  # Frontier-class reasoning model
 ```
 
 #### Class `ProductionRouter`
@@ -293,7 +293,7 @@ FALLBACK_MODEL: str = "llama-3.3-70b-versatile"  # Frontier-class reasoning mode
   - **Step 4**: Verifies output via `self.verifier.verify(prompt, response, tier, force_fail=force_fallback_demo)`.
   - **Step 5 (Fallback Escalation)**: If verification fails:
     - Sets `fallback_triggered = True` and records `fallback_reason`.
-    - Immediately re-routes prompt to `final_model = "llama-3.3-70b-versatile"`.
+    - Immediately re-routes prompt to `final_model = "openai/gpt-oss-120b"`.
     - Accumulates latency and token counts.
     - If verification passes: `fallback_triggered = False`, `final_model = initial_model`.
   - **Step 6**: Computes cost savings and updates telemetry tracker.
@@ -408,7 +408,7 @@ print(f"Overall Multiplier: {summary['edtech_multiplier']:.1f}x")
 from engine import generate, ModelClient
 
 # Direct function call
-res = generate("llama-3.1-8b-instant", "What is Newton's second law?")
+res = generate("openai/gpt-oss-20b", "What is Newton's second law?")
 print(res["text"], res["latency_ms"])
 
 # Or class instance
@@ -443,8 +443,8 @@ python3 tests/test_router.py
 **Verified Scenarios**:
 1. **Tier 1 (Factual Recall)**:
    - Query: `"What is the speed of light in a vacuum and who first measured it?"`
-   - Initial Model: `llama-3.1-8b-instant`
-   - Final Model: `llama-3.1-8b-instant`
+   - Initial Model: `openai/gpt-oss-20b`
+   - Final Model: `openai/gpt-oss-20b`
    - Fallback: `False` (Direct routing succeeded).
 2. **Tier 2 (Conceptual Explanation & Synthesis)**:
    - Query: `"Explain the differences between mitosis and meiosis, highlighting stages and genetic outcomes."`
@@ -453,13 +453,13 @@ python3 tests/test_router.py
    - Fallback: `False` (Direct routing succeeded).
 3. **Tier 3 (Complex Multi-step Proof & Automated Escalation)**:
    - Query: `"Prove by mathematical induction that for all positive integers n, 1 + 2 + ... + n = n(n + 1)/2."`
-   - Initial Model: `llama-3.1-8b-instant` (Speculative attempt)
+   - Initial Model: `openai/gpt-oss-20b` (Speculative attempt)
    - Verifier: `FAILED` (Heuristic checks identified insufficient depth)
    - Fallback: `True`
-   - Escalated Final Model: `llama-3.3-70b-versatile` (Frontier-class reasoning model).
+   - Escalated Final Model: `openai/gpt-oss-120b` (Frontier-class reasoning model).
 4. **Forced Fallback Demo**:
    - `route_and_execute("What is DNA?", force_fallback_demo=True)`
-   - Verified that `fallback_triggered=True` and escalated cleanly to `llama-3.3-70b-versatile`.
+   - Verified that `fallback_triggered=True` and escalated cleanly to `openai/gpt-oss-120b`.
 
 ---
 

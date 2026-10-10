@@ -20,9 +20,9 @@ def test_pricing_table():
     """Verify exact pricing per 1M tokens matches specifications."""
     print("--> Testing exact pricing table definitions...")
     expected_pricing = {
-        "llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
+        "openai/gpt-oss-20b": {"input": 0.075, "output": 0.30},
         "qwen/qwen3.8-27b": {"input": 0.80, "output": 4.00},
-        "llama-3.3-70b-versatile": {"input": 0.59, "output": 0.79},
+        "openai/gpt-oss-120b": {"input": 0.15, "output": 0.60},
         "Frontier Baseline (GPT-4o proxy)": {"input": 2.50, "output": 10.00},
     }
 
@@ -62,8 +62,8 @@ def test_model_client_generate():
 
     # Test class wrapper
     client = ModelClient()
-    class_res = client.generate("llama-3.1-8b-instant", "Quick test")
-    assert class_res["model"] == "llama-3.1-8b-instant"
+    class_res = client.generate("openai/gpt-oss-20b", "Quick test")
+    assert class_res["model"] == "openai/gpt-oss-20b"
 
     print(" [PASS] Model client generate works seamlessly with fallback and metrics.")
 
@@ -75,18 +75,18 @@ def test_telemetry_calculations():
 
     in_tokens = 10_000
     out_tokens = 2_000
-    model = "llama-3.1-8b-instant"
+    model = "openai/gpt-oss-20b"
 
     # Expected values:
-    # actual_cost = (10000 * 0.05 + 2000 * 0.08) / 1_000_000 = (500 + 160) / 1,000_000 = 0.00066
+    # actual_cost = (10000 * 0.075 + 2000 * 0.30) / 1_000_000 = 0.00135
     # baseline_cost = (10000 * 2.50 + 2000 * 10.00) / 1_000_000 = (25000 + 20000) / 1_000_000 = 0.045
-    # dollars_saved = 0.045 - 0.00066 = 0.04434
-    # savings_pct = (0.04434 / 0.045) * 100 = 98.5333... %
-    # edtech_multiplier = 0.045 / max(0.00066, 0.000001) = 68.1818...x
+    # dollars_saved = 0.045 - 0.00135 = 0.04365
+    # savings_pct = (0.04365 / 0.045) * 100 = 97.0%
+    # edtech_multiplier = 0.045 / max(0.00135, 0.000001) = 33.3333...x
 
-    expected_actual = 0.00066
+    expected_actual = 0.00135
     expected_baseline = 0.045
-    expected_saved = 0.04434
+    expected_saved = 0.04365
     expected_pct = (expected_saved / expected_baseline) * 100.0
     expected_multiplier = expected_baseline / max(expected_actual, 0.000001)
 
@@ -147,7 +147,7 @@ def test_end_to_end_integration():
     print("--> Testing end-to-end integration: generate() -> calculate_savings()...")
     tracker = TelemetryTracker()
 
-    models = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+    models = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"]
     for model in models:
         resp = generate(
             model_name=model,
@@ -169,11 +169,31 @@ def test_end_to_end_integration():
     print(" [PASS] End-to-end integration verified successfully.")
 
 
+def test_route_savings_aggregates_fallback_calls():
+    """Charge each attempted model while recording one routed query."""
+    tracker = TelemetryTracker()
+    result = tracker.calculate_route_savings(
+        [
+            ("openai/gpt-oss-20b", 10, 4),
+            ("openai/gpt-oss-120b", 20, 6),
+        ]
+    )
+
+    expected_actual = (10 * 0.075 + 4 * 0.30 + 20 * 0.15 + 6 * 0.60) / 1_000_000
+    expected_baseline = (30 * 2.50 + 10 * 10.00) / 1_000_000
+    assert math.isclose(result.actual_cost, expected_actual)
+    assert math.isclose(result.baseline_cost, expected_baseline)
+    assert tracker.total_queries == 1
+    assert tracker.total_input_tokens == 30
+    assert tracker.total_output_tokens == 10
+
+
 if __name__ == "__main__":
     test_pricing_table()
     test_model_client_generate()
     test_telemetry_calculations()
     test_end_to_end_integration()
+    test_route_savings_aggregates_fallback_calls()
     print("\n==========================================")
     print("ALL TESTS PASSED SUCCESSFULLY! (100% GREEN)")
     print("==========================================")

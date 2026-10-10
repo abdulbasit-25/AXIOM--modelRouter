@@ -1,10 +1,10 @@
 """Educational query classification infrastructure.
 
 Classifies incoming student/educational prompts into 3 distinct complexity tiers:
-- Tier 1: Factual Recall & Simple Definitions -> Meta fast SLM (llama-3.1-8b-instant)
+- Tier 1: Factual Recall & Simple Definitions -> OpenAI GPT OSS 20B
 - Tier 2: Conceptual Explanation & Structured Synthesis -> Alibaba structured synthesis (qwen/qwen3.8-27b)
-- Tier 3: Complex Multi-step Reasoning & Proofs -> Speculative fast attempt (llama-3.1-8b-instant)
-          escalating to Frontier-class reasoning (llama-3.3-70b-versatile)
+- Tier 3: Complex Multi-step Reasoning & Proofs -> Speculative fast attempt (OpenAI GPT OSS 20B)
+          escalating to Frontier-class reasoning (OpenAI GPT OSS 120B)
 """
 
 from __future__ import annotations
@@ -89,9 +89,9 @@ class EducationalQueryClassifier:
             3: "Tier 3: Complex Multi-step Reasoning / Deep Proof",
         }
         target_models = {
-            1: "llama-3.1-8b-instant",
+            1: "openai/gpt-oss-20b",
             2: "qwen/qwen3.8-27b",
-            3: "llama-3.1-8b-instant (speculative) -> llama-3.3-70b-versatile (fallback)",
+            3: "openai/gpt-oss-20b (speculative) -> openai/gpt-oss-120b (fallback)",
         }
         return {
             "tier": tier,
