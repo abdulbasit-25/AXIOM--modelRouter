@@ -98,6 +98,73 @@ def test_calibration_evaluates_route_and_records_tier_agreement():
         assert app.session_state["production_router"].telemetry.total_queries == 1
 
 
+def test_sdg_analytics_benchmarks_models_without_changing_router_telemetry():
+    def fake_generate(self, model_name, prompt, system_prompt=""):
+        output = (
+            "Water is H2O."
+            if model_name == "openai/gpt-oss-20b"
+            else "The sky is blue."
+        )
+        return {
+            "text": output,
+            "latency_ms": 100.0,
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "model": model_name,
+            "mock_fallback": False,
+        }
+
+    with _without_api_key(), patch(
+        "engine.model_client.ModelClient.generate",
+        new=fake_generate,
+    ):
+        app = AppTest.from_file(str(PROJECT_ROOT / "app" / "main.py")).run(timeout=10)
+        app.radio(key="active_destination").set_value("SDG Analytics").run(timeout=10)
+
+        app.text_area(key="sdg_benchmark_prompt").set_value("What is water made of?")
+        app.text_area(key="sdg_benchmark_reference").set_value("Water is H2O.")
+        app.selectbox(key="sdg_benchmark_tier").set_value(2)
+        app.multiselect(key="sdg_benchmark_models").set_value(
+            ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+        )
+        app.button(key="run_sdg_benchmark").click().run(timeout=10)
+
+        assert not app.exception
+        result = app.session_state["sdg_benchmark_latest"]
+        assert result["simulated"] is False
+        assert result["profile"] == "ABSA + LDA rubric"
+        assert result["best_model"] == "openai/gpt-oss-20b"
+        assert "dual_concept_coverage" in result["results"][0]
+        assert "technical_pipeline_completeness" in result["results"][0]
+        assert "semantic_similarity" in result["results"][0]
+        assert "structural_formatting" in result["results"][0]
+        assert "cost_latency_tradeoff" in result["results"][0]
+        assert result["results"][0]["composite_score"] > result["results"][1]["composite_score"]
+        profiler = app.session_state["benchmark_profiler"]
+        assert profiler.capability_matrix.get_model(2) == "openai/gpt-oss-20b"
+        assert app.session_state["production_router"].telemetry.total_queries == 0
+
+
+def test_sdg_analytics_marks_mock_benchmarks_and_does_not_update_matrix():
+    with _without_api_key():
+        app = AppTest.from_file(str(PROJECT_ROOT / "app" / "main.py")).run(timeout=10)
+        app.radio(key="active_destination").set_value("SDG Analytics").run(timeout=10)
+
+        app.text_area(key="sdg_benchmark_prompt").set_value("What is water made of?")
+        app.text_area(key="sdg_benchmark_reference").set_value("Water is H2O.")
+        app.multiselect(key="sdg_benchmark_models").set_value(["openai/gpt-oss-20b"])
+        app.button(key="run_sdg_benchmark").click().run(timeout=10)
+
+        assert not app.exception
+        result = app.session_state["sdg_benchmark_latest"]
+        assert result["simulated"] is True
+        assert result["results"][0]["mock_fallback"] is True
+        assert app.session_state["benchmark_profiler"].capability_matrix.get_model(1) == (
+            "openai/gpt-oss-20b"
+        )
+        assert any("not valid model-quality measurements" in item.value for item in app.warning)
+
+
 def test_all_pages_render_and_router_is_reused_across_navigation():
     destinations = (
         "Welcome",
@@ -163,6 +230,8 @@ if __name__ == "__main__":
     test_tutor_submits_question_and_displays_router_result()
     test_fallback_scenario_runs_both_models_and_records_one_query()
     test_calibration_evaluates_route_and_records_tier_agreement()
+    test_sdg_analytics_benchmarks_models_without_changing_router_telemetry()
+    test_sdg_analytics_marks_mock_benchmarks_and_does_not_update_matrix()
     test_all_pages_render_and_router_is_reused_across_navigation()
     test_unknown_active_destination_recovers_to_welcome()
     test_welcome_call_to_action_navigates_to_tutor()
