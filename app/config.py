@@ -1,7 +1,24 @@
 """Shared, non-secret application configuration."""
 
-PAGE_TITLE = "EduRoute | Learning, thoughtfully routed"
-PAGE_ICON = "E"
+from pathlib import Path
+
+BRAND_NAME = "Axiom"
+BRAND_WORDMARK = "AXIOM"
+BRAND_EXPANSION = "AI eXcellence in Optimized Mentoring"
+BRAND_TAGLINE = "Intelligence, routed with purpose."
+BRAND_SHORT_DESCRIPTION = "Educational AI routing for learning support."
+BRAND_DESCRIPTION = (
+    "Axiom is an educational AI routing prototype that classifies questions, routes them "
+    "to suitable AI models, verifies responses, and tracks session-scoped routing and "
+    "estimated cost metrics."
+)
+
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+BRAND_LOGO_PATH = ASSETS_DIR / "axiom-logo.svg"
+BRAND_MARK_PATH = ASSETS_DIR / "axiom-mark.svg"
+
+PAGE_TITLE = "Axiom — Intelligence, Routed with Purpose"
+PAGE_ICON = str(BRAND_MARK_PATH)
 
 NAVIGATION = (
     "Welcome",
