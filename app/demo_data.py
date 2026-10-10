@@ -1,4 +1,4 @@
-"""Sample-only content for developing the EduRoute frontend.
+"""Sample-only content for developing the Axiom frontend.
 
 Nothing in this module represents a live model response, benchmark, or measured
 cost or savings.
