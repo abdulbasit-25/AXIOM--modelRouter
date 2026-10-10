@@ -1,12 +1,45 @@
 """Session-scoped analytics page."""
 
 import csv
+from datetime import datetime, timezone
 from html import escape
 from io import StringIO
+import logging
 
 import streamlit as st
 
+from app.config import MAX_QUESTION_CHARS
 from app.services.router_service import get_router
+from core import BenchmarkProfiler, CapabilityMatrix
+from engine.model_client import SUPPORTED_MODELS
+from engine.router import TIER_MODEL_MAP
+from engine.telemetry import PRICING_PER_1M
+
+logger = logging.getLogger(__name__)
+_TIER_LABELS = {
+    1: "Tier 1 · Factual recall",
+    2: "Tier 2 · Conceptual explanation",
+    3: "Tier 3 · Multi-step reasoning",
+}
+_ABSA_LDA_PROMPT = (
+    "Explain how LDA can be used for aspect extraction in aspect-based sentiment "
+    "analysis, including the preprocessing, topic mapping, and per-aspect sentiment steps."
+)
+_ABSA_LDA_REFERENCE = """Aspect-Based Sentiment Analysis (ABSA) identifies specific entities or aspects in text and determines the sentiment polarity associated with each aspect. For example, in “Great food, but terrible service,” food is positive and service is negative.
+
+LDA (Latent Dirichlet Allocation) is an unsupervised topic model. It represents each document as a mixture of topics (theta) and each topic as a probability distribution over words (phi). These topics can represent aspect categories, such as screen, battery, and display forming a hardware topic.
+
+The pipeline is:
+1. Preprocess text with tokenization, stop-word removal, POS tagging, noun or noun-phrase candidate extraction, and lemmatization.
+2. Apply LDA to discover latent topics and use document-topic (theta) and topic-word (phi) distributions to map documents and aspect terms.
+3. After extracting aspects, classify sentiment for each aspect from local context windows or dependency parses, using a lexicon or classifier such as VADER, SVM, or a fine-tuned transformer, to assign positive, negative, or neutral polarity.
+
+Evaluation dimensions:
+1. Dual-concept coverage: ABSA and LDA are both explained and connected.
+2. Technical pipeline completeness: preprocessing, topic discovery, theta/phi mapping, and post-LDA sentiment assignment are covered.
+3. Semantic similarity to ground truth: text overlap with the supplied reference.
+4. Structural formatting: the explanation is organized and readable.
+5. Cost & latency trade-off: response speed and estimated generation cost."""
 
 _CSS = """
 <style>
@@ -131,6 +164,265 @@ def _gauge(percent: float, label: str, color: str = "#D4D7D3") -> str:
     )
 
 
+def _get_benchmark_profiler() -> BenchmarkProfiler:
+    profiler = st.session_state.get("benchmark_profiler")
+    if not isinstance(profiler, BenchmarkProfiler):
+        profiler = BenchmarkProfiler(
+            capability_matrix=CapabilityMatrix(initial_matrix=TIER_MODEL_MAP)
+        )
+        st.session_state["benchmark_profiler"] = profiler
+    return profiler
+
+
+def _render_benchmark() -> None:
+    _label(
+        "Model evaluation",
+        "Compare supported models against the same question and reference rubric. "
+        "Each selected model makes one generation call.",
+    )
+    st.caption(
+        "ABSA/LDA profile: five equally weighted scores for dual-concept coverage, pipeline "
+        "completeness, lexical reference similarity, structure, and cost/latency trade-off. "
+        "Coverage and similarity scores are text heuristics, not proof of factual correctness "
+        "or learning outcomes. "
+        "Mock responses are shown for demonstration only and never update the capability matrix."
+    )
+
+    with st.form("sdg_benchmark_form"):
+        profile = st.selectbox(
+            "Evaluation profile",
+            options=("ABSA + LDA rubric", "General reference comparison"),
+            key="sdg_benchmark_profile",
+        )
+        prompt = st.text_area(
+            "Evaluation question",
+            key="sdg_benchmark_prompt",
+            max_chars=MAX_QUESTION_CHARS,
+            placeholder="Enter the same question to send to each selected model.",
+            value=_ABSA_LDA_PROMPT,
+        )
+        ground_truth = st.text_area(
+            "Reference answer or scoring rubric",
+            key="sdg_benchmark_reference",
+            max_chars=4000,
+            placeholder="Enter the key facts and expected structure used to compare responses.",
+            value=_ABSA_LDA_REFERENCE,
+        )
+        tier_column, model_column = st.columns([1, 2])
+        with tier_column:
+            tier = st.selectbox(
+                "Tier to calibrate",
+                options=(1, 2, 3),
+                format_func=lambda value: _TIER_LABELS[value],
+                key="sdg_benchmark_tier",
+            )
+        with model_column:
+            selected_models = st.multiselect(
+                "Models to compare",
+                options=SUPPORTED_MODELS,
+                default=SUPPORTED_MODELS,
+                key="sdg_benchmark_models",
+            )
+        submitted = st.form_submit_button(
+            "Run model evaluation",
+            type="primary",
+            key="run_sdg_benchmark",
+        )
+
+    if submitted:
+        if not prompt.strip():
+            st.warning("Enter an evaluation question before running the benchmark.")
+        elif not ground_truth.strip():
+            st.warning("Enter a reference answer or rubric before evaluating responses.")
+        elif not selected_models:
+            st.warning("Select at least one supported model to compare.")
+        else:
+            profiler = _get_benchmark_profiler()
+            router = get_router()
+            candidate_records = []
+            all_live = True
+            try:
+                with st.spinner("Generating and evaluating model responses..."):
+                    for model_name in selected_models:
+                        generated = router.model_client.generate(
+                            model_name=model_name,
+                            prompt=prompt.strip(),
+                            system_prompt=(
+                                "You are an educational tutor. Answer the learner's question "
+                                "clearly and accurately. Use the supplied reference rubric as "
+                                "the evaluation criteria; do not merely repeat it.\n\n"
+                                f"Reference rubric:\n{ground_truth.strip()}"
+                            ),
+                        )
+                        pricing = PRICING_PER_1M[model_name]
+                        cost = (
+                            generated["input_tokens"] * pricing["input"]
+                            + generated["output_tokens"] * pricing["output"]
+                        ) / 1_000_000.0
+                        is_mock = bool(generated.get("mock_fallback", False))
+                        all_live = all_live and not is_mock
+                        candidate_records.append(
+                            {
+                                "model": model_name,
+                                "output": generated["text"],
+                                "latency_ms": generated["latency_ms"],
+                                "cost": cost,
+                                "input_tokens": generated["input_tokens"],
+                                "output_tokens": generated["output_tokens"],
+                                "mock_fallback": is_mock,
+                            }
+                        )
+
+                    if profile == "ABSA + LDA rubric":
+                        evaluated = profiler.benchmark_absa_lda_models(
+                            candidate_records,
+                            ground_truth.strip(),
+                            auto_update_tier=int(tier) if all_live else None,
+                        )
+                    else:
+                        evaluated = profiler.benchmark_models(
+                            candidate_records,
+                            ground_truth.strip(),
+                            auto_update_tier=int(tier) if all_live else None,
+                        )
+                best_model = evaluated[0]["model"]
+                benchmark = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "tier": int(tier),
+                    "results": evaluated,
+                    "simulated": not all_live,
+                    "best_model": best_model,
+                    "profile": profile,
+                }
+                st.session_state["sdg_benchmark_latest"] = benchmark
+                st.session_state.setdefault("sdg_benchmark_history", []).append(
+                    {
+                        "Timestamp (UTC)": benchmark["timestamp"],
+                        "Tier": benchmark["tier"],
+                        "Top-ranked model": best_model,
+                        "Composite score": evaluated[0].get(
+                            "absa_lda_composite_score",
+                            evaluated[0]["composite_score"],
+                        ),
+                        "Live responses": all_live,
+                    }
+                )
+                st.session_state.pop("sdg_benchmark_error", None)
+            except Exception:
+                logger.exception("SDG model evaluation failed")
+                st.session_state["sdg_benchmark_error"] = (
+                    "The model evaluation could not be completed. Check the application logs."
+                )
+
+    if error_message := st.session_state.get("sdg_benchmark_error"):
+        st.error(error_message)
+
+    latest = st.session_state.get("sdg_benchmark_latest")
+    if latest:
+        if latest["simulated"]:
+            st.warning(
+                "At least one response was simulated because a live provider response was "
+                "unavailable. These scores are not valid model-quality measurements, and the "
+                "capability matrix was not changed."
+            )
+        else:
+            st.success(
+                f"Top-ranked for {_TIER_LABELS[latest['tier']]}: "
+                f"{latest['best_model']}. This updates the session recommendation only; "
+                "the production router's fixed model mapping is unchanged."
+            )
+
+        if latest["profile"] == "ABSA + LDA rubric":
+            table_rows = [
+                {
+                    "Rank": index,
+                    "Model": result["model"],
+                    "Dual concept": result["dual_concept_coverage"],
+                    "Pipeline": result["technical_pipeline_completeness"],
+                    "Reference match": result["semantic_similarity"],
+                    "Structure": result["structural_formatting"],
+                    "Cost/latency": result["cost_latency_tradeoff"],
+                    "Composite": result["absa_lda_composite_score"],
+                    "Latency (ms)": result["latency_ms"],
+                    "Estimated cost (USD)": result["cost"],
+                    "Simulated": result.get("mock_fallback", False),
+                }
+                for index, result in enumerate(latest["results"], start=1)
+            ]
+            detail_columns = st.columns(2, gap="medium")
+            for index, (label, field) in enumerate(
+                (
+                    ("ABSA concept coverage", "absa_coverage"),
+                    ("LDA concept coverage", "lda_coverage"),
+                    ("Preprocessing", "preprocessing_completeness"),
+                    ("Aspect extraction", "aspect_extraction_completeness"),
+                    ("Topic modeling", "topic_modeling_completeness"),
+                    ("Theta/phi mapping", "topic_mapping_completeness"),
+                    ("Sentiment classification", "sentiment_classification_completeness"),
+                    ("Cost score", "cost_score"),
+                )
+            ):
+                with detail_columns[index % 2]:
+                    st.caption(
+                        f"{label}: "
+                        + " · ".join(
+                            f"{result['model']}: {result[field]:.0%}"
+                            for result in latest["results"]
+                        )
+                    )
+        else:
+            table_rows = [
+                {
+                    "Rank": index,
+                    "Model": result["model"],
+                    "Character similarity": result["semantic_score"],
+                    "Token overlap": result["token_overlap_score"],
+                    "Reference match": result["content_score"],
+                    "Format": result["format_score"],
+                    "Speed": result["speed_score"],
+                    "Composite": result["composite_score"],
+                    "Latency (ms)": result["latency_ms"],
+                    "Estimated cost (USD)": result["cost"],
+                    "Simulated": result.get("mock_fallback", False),
+                }
+                for index, result in enumerate(latest["results"], start=1)
+            ]
+        st.dataframe(table_rows, width="stretch", hide_index=True)
+        report = StringIO()
+        writer = csv.DictWriter(report, fieldnames=list(table_rows[0]))
+        writer.writeheader()
+        writer.writerows(table_rows)
+        st.download_button(
+            "Download benchmark results (CSV)",
+            data=report.getvalue(),
+            file_name="axiom-model-benchmark.csv",
+            mime="text/csv",
+            key="download_sdg_benchmark",
+        )
+
+        for index, result in enumerate(latest["results"], start=1):
+            with st.expander(f"{index}. {result['model']} response"):
+                st.text(result["output"] or "(The model returned an empty response.)")
+
+        profiler = _get_benchmark_profiler()
+        matrix_rows = [
+            {
+                "Tier": _TIER_LABELS[tier_number],
+                "Recommended model": profiler.capability_matrix.get_model(tier_number),
+            }
+            for tier_number in (1, 2, 3)
+        ]
+        st.caption(
+            "Session capability recommendations (not yet applied to production routing):"
+        )
+        st.dataframe(matrix_rows, width="stretch", hide_index=True)
+
+    history = st.session_state.get("sdg_benchmark_history", [])
+    if history:
+        with st.expander("Evaluation history"):
+            st.dataframe(history, width="stretch", hide_index=True)
+
+
 def render() -> None:
     st.markdown(_html(_CSS), unsafe_allow_html=True)
 
@@ -166,6 +458,8 @@ def render() -> None:
         ),
         unsafe_allow_html=True,
     )
+
+    _render_benchmark()
 
     if not rows:
         st.markdown(
