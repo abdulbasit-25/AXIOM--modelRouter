@@ -13,6 +13,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from app.config import BRAND_EXPANSION, BRAND_LOGO_PATH, BRAND_TAGLINE, PAGE_ICON
+
 
 @contextmanager
 def _without_api_key() -> Generator[None, None, None]:
@@ -109,9 +111,23 @@ def test_all_pages_render_and_router_is_reused_across_navigation():
             assert not app.exception
             assert app.session_state["active_destination"] == destination
             assert app.session_state["production_router"] is router
+            if destination == "Welcome":
+                assert app.title[0].value == BRAND_TAGLINE
+            if destination == "About":
+                assert any(BRAND_EXPANSION in item.value for item in app.markdown)
+                team_credit = "\n".join(item.value for item in app.markdown)
+                assert "Backend" in team_credit
+                assert "Abdul Basit" in team_credit
+                assert "Frontend" in team_credit
+                assert "Fatima Asim" in team_credit
+                assert "Classifier" in team_credit
+                assert team_credit.count('class="team-card"') == 3
 
 
 def test_unknown_active_destination_recovers_to_welcome():
+    assert BRAND_LOGO_PATH.is_file()
+    assert Path(PAGE_ICON).is_file()
+
     with _without_api_key():
         app = AppTest.from_file(str(PROJECT_ROOT / "app" / "main.py"))
         app.session_state["active_destination"] = "Unknown page"
@@ -119,7 +135,7 @@ def test_unknown_active_destination_recovers_to_welcome():
 
         assert not app.exception
         assert app.session_state["active_destination"] == "Welcome"
-        assert any("A more thoughtful way to learn." in item.value for item in app.title)
+        assert any("Intelligence, routed with purpose." in item.value for item in app.title)
 
 
 def test_welcome_call_to_action_navigates_to_tutor():
