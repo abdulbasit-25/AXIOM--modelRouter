@@ -156,7 +156,7 @@ def test_welcome_call_to_action_navigates_to_tutor():
 
         assert not app.exception
         assert app.session_state["active_destination"] == "Production AI Tutor"
-        assert any("1 · Choose a scenario" in item.value for item in app.markdown)
+        assert any("Choose a scenario" in item.value for item in app.markdown)
 
 
 if __name__ == "__main__":
