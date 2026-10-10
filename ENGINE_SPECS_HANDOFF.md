@@ -1,6 +1,6 @@
-# Model Router Backend Infrastructure — Handover & Engineering Specifications
+# Axiom Routing Engine — Handover & Engineering Specifications
 
-This document provides a technical specification of the backend infrastructure implemented in the `Model-Router` repository. It is designed for engineers, teammates, and AI agents continuing work on subsequent layers (such as `core/profiler.py`, `app/components.py`, and `app/main.py`).
+This document provides a technical specification of the routing infrastructure implemented in the Axiom repository. It is intended for engineers continuing work on the classifier, verifier, model client, router, and telemetry. The current Streamlit interface is organized under `app/pages/`, `app/components/`, and `app/navigation/`; see `README.md` for the current application structure.
 
 ---
 
