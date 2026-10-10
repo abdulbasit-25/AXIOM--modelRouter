@@ -1,9 +1,9 @@
 
-"""Light-themed navigation for Model Router."""
+"""Axiom's light-themed navigation."""
 
 import streamlit as st
 
-from app.config import NAVIGATION, NAV_ICONS
+from app.config import BRAND_NAME, BRAND_WORDMARK, NAVIGATION, NAV_ICONS
 from app.components.branding import brand_lockup
 
 
@@ -16,14 +16,12 @@ def render_sidebar() -> str:
         /* ===== SIDEBAR PALETTE ===== */
 
         [data-testid="stSidebar"] {
-            --mr-sidebar-bg: #EAF2EE;
-            --mr-sidebar-border: #D3E1DA;
-            --mr-sidebar-ink: #203A33;
-            --mr-sidebar-muted: #5B7168;
-            --mr-sidebar-accent: #17634F;
-            background:
-                radial-gradient(ellipse at 0% 0%, rgba(73, 137, 108, 0.10), transparent 44%),
-                linear-gradient(180deg, #F1F6F3 0%, var(--mr-sidebar-bg) 58%, #E5EEE9 100%);
+            --mr-sidebar-bg: #F0F2F1;
+            --mr-sidebar-border: var(--brand-neutral);
+            --mr-sidebar-ink: var(--brand-primary);
+            --mr-sidebar-muted: var(--brand-secondary);
+            --mr-sidebar-accent: var(--brand-accent);
+            background: var(--mr-sidebar-bg);
             border-right: 1px solid var(--mr-sidebar-border);
         }
 
@@ -40,7 +38,7 @@ def render_sidebar() -> str:
         .mr-nav-heading {
             margin: 1.55rem 0 0.7rem;
             padding: 0 0.75rem;
-            color: #557267;
+            color: var(--mr-sidebar-muted);
             font-family: "Segoe UI", sans-serif;
             font-size: 10px;
             font-weight: 700;
@@ -89,8 +87,8 @@ def render_sidebar() -> str:
 
         [data-testid="stSidebar"] [role="radiogroup"]
         [data-testid="stRadioOption"]:hover {
-            background: #DDEBE4;
-            border-color: #C6D9CE;
+            background: var(--primary-soft);
+            border-color: var(--mr-sidebar-border);
             transform: translateX(2px);
         }
 
@@ -98,15 +96,15 @@ def render_sidebar() -> str:
         [data-testid="stRadioOption"]:hover > div:last-child,
         [data-testid="stSidebar"] [role="radiogroup"]
         [data-testid="stRadioOption"]:hover > div:last-child p {
-            color: #174B3D;
+            color: var(--mr-sidebar-ink);
         }
 
-        /* Evergreen active state with a small warm accent. */
+        /* High-contrast active state uses the primary Axiom brand color. */
         [data-testid="stSidebar"] [role="radiogroup"]
         [data-testid="stRadioOption"][data-selected="true"] {
-            background: linear-gradient(110deg, #174B3D 0%, #21644F 100%);
-            border-color: #174B3D;
-            box-shadow: 0 5px 14px rgba(23, 75, 61, 0.18);
+            background: var(--brand-primary);
+            border-color: var(--brand-primary);
+            box-shadow: 0 5px 14px rgba(44, 66, 63, 0.14);
         }
 
         [data-testid="stSidebar"] [role="radiogroup"]
@@ -126,13 +124,13 @@ def render_sidebar() -> str:
             bottom: 11px;
             width: 3px;
             border-radius: 0 3px 3px 0;
-            background: #D4B56A;
+            background: var(--mr-sidebar-accent);
         }
 
         /* Keyboard accessibility */
         [data-testid="stSidebar"] [role="radiogroup"]
         [data-testid="stRadioOption"]:focus-within {
-            outline: 2px solid #43846A;
+            outline: 2px solid var(--mr-sidebar-accent);
             outline-offset: 2px;
         }
 
@@ -141,23 +139,21 @@ def render_sidebar() -> str:
         .mr-divider {
             height: 1px;
             margin: 1.15rem 0;
-            background: #CDDDD4;
+            background: var(--mr-sidebar-border);
         }
 
         /* ===== SYSTEM PANEL ===== */
 
         .mr-system-panel {
             padding: 16px 14px 14px;
-            border: 1px solid #D0E0D7;
+            border: 1px solid var(--mr-sidebar-border);
             border-radius: 12px;
-            background:
-                radial-gradient(190px 110px at 100% 0%, rgba(73, 137, 108, 0.10), transparent 75%),
-                linear-gradient(145deg, #FFFFFF 0%, #F5F8F5 100%);
-            box-shadow: 0 4px 14px rgba(32, 58, 51, 0.045);
+            background: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(44, 66, 63, 0.045);
         }
 
         .mr-system-eyebrow {
-            color: #39735C;
+            color: var(--mr-sidebar-muted);
             font-family: "Segoe UI", sans-serif;
             font-size: 10px;
             font-weight: 700;
@@ -166,7 +162,7 @@ def render_sidebar() -> str:
 
         .mr-system-title {
             margin-top: 12px;
-            color: #203A33;
+            color: var(--mr-sidebar-ink);
             font-family: "Segoe UI", sans-serif;
             font-size: 14px;
             font-weight: 700;
@@ -175,7 +171,7 @@ def render_sidebar() -> str:
 
         .mr-system-description {
             margin-top: 5px;
-            color: #5B7168;
+            color: var(--mr-sidebar-muted);
             font-family: "Segoe UI", sans-serif;
             font-size: 11px;
             font-weight: 400;
@@ -185,8 +181,8 @@ def render_sidebar() -> str:
         .mr-system-caption {
             margin-top: 14px;
             padding-top: 10px;
-            border-top: 1px solid #DCE7E1;
-            color: #39735C;
+            border-top: 1px solid var(--mr-sidebar-border);
+            color: var(--mr-sidebar-muted);
             font-family: "Segoe UI", sans-serif;
             font-size: 9px;
             font-weight: 700;
@@ -197,7 +193,7 @@ def render_sidebar() -> str:
 
         .mr-sidebar-footer {
             padding: 10px 0 0;
-            color: #688076;
+            color: var(--mr-sidebar-muted);
             font-family: "Segoe UI", sans-serif;
             font-size: 9px;
             font-weight: 600;
@@ -218,7 +214,7 @@ def render_sidebar() -> str:
         brand_lockup()
 
         st.markdown(
-            """
+            f"""
             <div class="mr-nav-heading">Workspace</div>
             """,
             unsafe_allow_html=True,
@@ -235,12 +231,12 @@ def render_sidebar() -> str:
         )
 
         st.markdown(
-            """
+            f"""
             <div class="mr-divider"></div>
 
             <div class="mr-system-panel">
                 <div class="mr-system-eyebrow">YOUR WORKSPACE</div>
-                <div class="mr-system-title">Model Router</div>
+                <div class="mr-system-title">{BRAND_NAME}</div>
                 <div class="mr-system-description">
                     Intelligent model selection and AI-powered
                     tutoring, unified in one workspace.
@@ -251,7 +247,7 @@ def render_sidebar() -> str:
             </div>
 
             <div class="mr-sidebar-footer">
-                MODEL ROUTER WORKSPACE
+                {BRAND_WORDMARK} LEARNING WORKSPACE
             </div>
             """,
             unsafe_allow_html=True,
