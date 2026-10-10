@@ -59,7 +59,7 @@ def test_benchmark_ranks_models_and_updates_only_selected_tier():
 
     assert [result["model"] for result in results] == ["model-a", "model-b"]
     assert matrix.get_model(2) == "model-a"
-    assert matrix.get_model(1) == "openai/gpt-oss-20b"
+    assert matrix.get_model(1) == "llama-3.1-8b-instant"
     assert math.isclose(results[0]["composite_score"], 0.99)
 
 

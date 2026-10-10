@@ -22,6 +22,6 @@ def initialize_session_state() -> str:
         st.session_state["scenario"] = scenario
 
     if "question_input" not in st.session_state:
-        st.session_state["question_input"] = SCENARIOS[scenario]
+        st.session_state["question_input"] = ""
 
     return active

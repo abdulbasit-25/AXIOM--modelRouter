@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 # Architecture mapping per query complexity tier
 TIER_MODEL_MAP: Dict[int, str] = {
-    1: "openai/gpt-oss-20b",         # Fast model (Factual Recall / Definitions)
+    1: "llama-3.1-8b-instant",       # Fast model (Factual Recall / Definitions)
     2: "qwen/qwen3.8-27b",           # Alibaba structured synthesis (Conceptual Explanations)
-    3: "openai/gpt-oss-20b",         # Speculative fast attempt (Complex Reasoning / Proofs)
+    3: "llama-3.1-8b-instant",       # Speculative fast attempt (Complex Reasoning / Proofs)
 }
 
-FALLBACK_MODEL: str = "openai/gpt-oss-120b"  # Frontier-class escalation model
+FALLBACK_MODEL: str = "llama-3.3-70b-versatile"  # Frontier-class escalation model
 
 
 class ProductionRouter:
@@ -64,8 +64,14 @@ class ProductionRouter:
             }
         """
         # Step 1: Classify prompt tier via classifier
-        tier_raw = self.classifier.classify(prompt)
-        tier = int(tier_raw) if isinstance(tier_raw, (int, float)) else 1
+        tier_res = self.classifier.classify(prompt)
+        if isinstance(tier_res, dict):
+            tier = int(tier_res.get("tier", 1))
+        elif isinstance(tier_res, (int, float)):
+            tier = int(tier_res)
+        else:
+            tier = 1
+
         if tier not in TIER_MODEL_MAP:
             tier = 1
 
@@ -94,22 +100,13 @@ class ProductionRouter:
         mock_fallback = bool(initial_result.get("mock_fallback", False))
 
         # Step 4: Verify output via LightweightVerifier
-        if force_fallback_demo:
-            verification = self.verifier.verify(
-                prompt=prompt,
-                response=response_text,
-                tier=tier,
-                force_fail=True,
-                model_name=initial_model,
-            )
-        else:
-            verification = self.verifier.verify(
-                prompt=prompt,
-                response=response_text,
-                tier=tier,
-                force_fail=False,
-                model_name=initial_model,
-            )
+        verification = self.verifier.verify(
+            output_text=response_text,
+            tier=tier,
+            prompt=prompt,
+            force_fail=force_fallback_demo,
+            model_name=initial_model,
+        )
 
         verification_passed = bool(verification)
 

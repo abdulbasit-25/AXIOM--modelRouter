@@ -38,17 +38,17 @@ NAV_ICONS = {
 }
 
 SCENARIOS = {
-    "Vocabulary Flashcard": "Explain the meaning of a vocabulary word and give one example sentence.",
-    "Curriculum Synthesis": "Summarize the key ideas in a topic for a secondary-school student.",
-    "STEM Reasoning": "Explain how to approach a multi-step science or mathematics problem.",
-    "Fallback Demonstration": "Show how a learning assistant could respond when its preferred route is unavailable.",
+    "Vocabulary Flashcard": "Define photosynthesis and explain its primary biological function.",
+    "Curriculum Synthesis": "Explain the key differences between mitosis and meiosis for high school biology students.",
+    "STEM Reasoning": "Prove by mathematical induction that for all positive integers n, 1 + 2 + ... + n = n(n + 1)/2.",
+    "Fallback Demonstration": "Solve the quadratic equation 2x^2 + 5x - 3 = 0 showing step-by-step mathematical proof.",
 }
 
 SCENARIO_DESCRIPTIONS = {
-    "Vocabulary Flashcard": "Build quick, memorable language understanding.",
-    "Curriculum Synthesis": "Turn broad topics into student-friendly summaries.",
-    "STEM Reasoning": "Work through analytical problem solving step by step.",
-    "Fallback Demonstration": "Show a graceful response when the main route is unavailable.",
+    "Vocabulary Flashcard": "Tier 1: Fast SLM micro-recall (llama-3.1-8b-instant).",
+    "Curriculum Synthesis": "Tier 2: Conceptual explanation & synthesis (qwen/qwen3.8-27b).",
+    "STEM Reasoning": "Tier 3: Complex mathematical proof & deep STEM reasoning.",
+    "Fallback Demonstration": "Tier 3: Simulated verification failure & escalation to llama-3.3-70b-versatile.",
 }
 
 GETTING_STARTED = (

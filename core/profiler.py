@@ -23,8 +23,8 @@ class CapabilityMatrix:
 
     DEFAULT_ARCHITECTURES: dict[int, dict[str, str]] = {
         1: {
-            "model": "openai/gpt-oss-20b",
-            "provider": "OpenAI via Groq",
+            "model": "llama-3.1-8b-instant",
+            "provider": "Meta via Groq",
             "tier_name": "Tier 1 (Instant / Low-Latency)",
         },
         2: {
@@ -33,8 +33,8 @@ class CapabilityMatrix:
             "tier_name": "Tier 2 (Balanced / Reasoning)",
         },
         3: {
-            "model": "openai/gpt-oss-120b",
-            "provider": "OpenAI via Groq",
+            "model": "llama-3.3-70b-versatile",
+            "provider": "Meta via Groq",
             "tier_name": "Tier 3 (Heavy / Complex Synthesis)",
         },
     }

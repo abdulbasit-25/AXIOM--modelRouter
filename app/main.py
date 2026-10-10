@@ -1,4 +1,10 @@
-"""Minimal Streamlit entry point for Axiom's custom page navigation."""
+import sys
+from pathlib import Path
+
+# Ensure repository root is in sys.path so 'app', 'core', and 'engine' are always importable
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import streamlit as st
 

@@ -31,8 +31,11 @@ def get_page_renderers() -> dict[str, Callable[[], None]]:
     return {
         "Welcome": render_welcome,
         "Production AI Tutor": render_tutor,
+        "🚀 Production AI Tutor": render_tutor,
         "Calibration Studio": render_calibration,
+        "🔬 Capability Calibration Studio - Dev Mode": render_calibration,
         "SDG Analytics": render_analytics,
+        "📊 SDG 4/8 Institutional Impact Analytics": render_analytics,
         "About": render_about,
     }
 

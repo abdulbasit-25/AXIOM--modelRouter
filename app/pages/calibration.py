@@ -1,7 +1,9 @@
-"""Calibration Studio page."""
+"""Capability Calibration Studio - Dev Mode page."""
 
+import csv
 from datetime import datetime, timezone
 from html import escape
+from io import StringIO
 import logging
 
 import streamlit as st
@@ -9,225 +11,436 @@ import streamlit as st
 from app.config import MAX_QUESTION_CHARS
 from app.services.router_service import get_router
 from app.pages import page_base as ui
+from core import BenchmarkProfiler, CapabilityMatrix
+from engine.model_client import SUPPORTED_MODELS
+from engine.router import TIER_MODEL_MAP
+from engine.telemetry import PRICING_PER_1M
 
 logger = logging.getLogger(__name__)
 
-_VERDICT_CSS = """
-<style>
-[data-testid="stForm"] [data-testid="stWidgetLabel"] p {
-    color: #E5E7E3 !important;
+_TIER_LABELS = {
+    1: "Tier 1 · Vocab & Factual Recall",
+    2: "Tier 2 · Conceptual Synthesis & Essay",
+    3: "Tier 3 · STEM, Proofs & Code",
 }
+
+_DEFAULT_PROMPT = (
+    "Explain the key differences between mitosis and meiosis for high school biology students, "
+    "highlighting cellular purpose, division stages, and genetic variation."
+)
+
+_DEFAULT_RUBRIC = """### Ground-Truth Reference Rubric: Mitosis vs. Meiosis
+
+1. Purpose: Mitosis produces 2 genetically identical diploid (2n) somatic cells for growth and tissue repair. Meiosis produces 4 genetically diverse haploid (n) gametes for sexual reproduction.
+2. Divisions: Mitosis involves 1 nuclear division (PMAT). Meiosis involves 2 consecutive nuclear divisions (Meiosis I and Meiosis II).
+3. Genetic Variation: Crossing over (prophase I) and independent assortment occur exclusively in meiosis, creating genetic diversity, whereas mitosis maintains clonal genetic consistency.
+4. Formatting: Clear markdown headings, numbered or bulleted comparative lists, and concise pedagogical terminology."""
+
+_CARD_CSS = """
+<style>
+.cal-winner {
+    position: relative;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    padding: 1.8rem 2rem;
+    border-radius: 24px;
+    border: 1px solid #D4D7D3;
+    background: linear-gradient(135deg, #2C423F, #1F302D);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+}
+.cal-winner small {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #A3ADA5;
+}
+.cal-winner h2 {
+    margin: 0.4rem 0 0.8rem;
+    font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: #D4D7D3 !important;
+}
+.cal-winner p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #A3ADA5;
+}
+.cal-model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+    margin: 1.5rem 0;
+}
+.cal-card {
+    position: relative;
+    padding: 1.6rem;
+    border-radius: 20px;
+    border: 1px solid rgba(212,215,211,0.25);
+    background: linear-gradient(160deg, #2b413d, #1f312e);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+    transition: transform 0.4s ease, border-color 0.4s;
+}
+.cal-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(212,215,211,0.55);
+}
+.cal-card.winner-card {
+    border: 1.5px solid #D4D7D3;
+    background: linear-gradient(160deg, #344B45, #263A36);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.35);
+}
+.cal-card h3 {
+    margin: 0.2rem 0 0.8rem;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: #D4D7D3 !important;
+}
+.cal-score-big {
+    font-size: 2.2rem;
+    font-weight: 200;
+    color: #D4D7D3;
+    margin: 0.6rem 0;
+}
+.cal-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    border-top: 1px solid rgba(212,215,211,0.12);
+    font-size: 0.82rem;
+    color: #A3ADA5;
+}
+.cal-stat-row b {
+    color: #D4D7D3;
+    font-weight: 500;
+}
+
+/* Form inputs & typed text styling for Calibration Studio */
+[data-testid="stForm"] {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(44,66,63,.25) !important;
+    border-radius: 20px !important;
+    padding: 1.8rem !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+}
+
+[data-testid="stForm"] [data-baseweb="textarea"],
+[data-testid="stForm"] [data-baseweb="base-input"] {
+    background: #FFFFFF !important;
+    border: 1px solid #899B9A !important;
+    border-radius: 12px !important;
+}
+
 [data-testid="stForm"] [data-testid="stTextArea"] textarea {
     background: #FFFFFF !important;
     color: #263A36 !important;
     -webkit-text-fill-color: #263A36 !important;
     caret-color: #263A36 !important;
+    font-size: 0.98rem !important;
+    line-height: 1.6 !important;
 }
+
 [data-testid="stForm"] [data-testid="stTextArea"] textarea::placeholder {
     color: #566970 !important;
     -webkit-text-fill-color: #566970 !important;
     opacity: 1 !important;
 }
-[data-testid="stForm"] [data-baseweb="textarea"] {
-    background: #FFFFFF !important;
-    border-color: #899B9A !important;
+
+[data-testid="stForm"] [data-testid="stWidgetLabel"] p,
+[data-testid="stForm"] [data-testid="stWidgetLabel"] label {
+    color: #263A36 !important;
+    font-weight: 500 !important;
 }
-[data-testid="stForm"] [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+
+[data-testid="stForm"] [data-baseweb="select"] > div {
     background: #FFFFFF !important;
-    border-color: #899B9A !important;
+    color: #263A36 !important;
+    border: 1px solid #899B9A !important;
+    border-radius: 10px !important;
 }
-[data-testid="stForm"] [data-testid="stSelectbox"] [data-baseweb="select"] span,
-[data-testid="stForm"] [data-testid="stSelectbox"] [data-baseweb="select"] div {
+
+[data-testid="stForm"] [data-baseweb="select"] span,
+[data-testid="stForm"] [data-baseweb="select"] div {
     color: #263A36 !important;
 }
-[data-testid="stForm"] [data-testid="stSelectbox"] [data-baseweb="select"] svg {
-    color: #263A36 !important;
-    fill: #263A36 !important;
-}
-[data-testid="stForm"] [data-testid="stSelectbox"] [data-baseweb="select"] > div:hover {
-    border-color: #263A36 !important;
-}
-[data-testid="stForm"] [data-baseweb="textarea"]:focus-within,
-[data-testid="stForm"] [data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within {
-    border-color: #263A36 !important;
-    box-shadow: 0 0 0 2px rgba(38,58,54,.24) !important;
-}
-[data-testid="stForm"] .stFormSubmitButton > button[kind="primaryFormSubmit"] {
+
+[data-testid="stForm"] .stButton > button[kind="primary"] {
     background: #263A36 !important;
     border-color: #263A36 !important;
     color: #FFFFFF !important;
 }
-[data-testid="stForm"] .stFormSubmitButton > button[kind="primaryFormSubmit"] p,
-[data-testid="stForm"] .stFormSubmitButton > button[kind="primaryFormSubmit"] span {
+
+[data-testid="stForm"] .stButton > button[kind="primary"] p,
+[data-testid="stForm"] .stButton > button[kind="primary"] span {
     color: #FFFFFF !important;
 }
-[data-testid="stForm"] .stFormSubmitButton > button[kind="primaryFormSubmit"]:hover {
+
+[data-testid="stForm"] .stButton > button[kind="primary"]:hover {
     background: #405653 !important;
     border-color: #405653 !important;
 }
-[data-testid="stForm"] .stFormSubmitButton > button[kind="primaryFormSubmit"]:active {
-    background: #4C5B61 !important;
-    border-color: #4C5B61 !important;
-}
-[data-testid="stForm"] .stFormSubmitButton > button[kind="primaryFormSubmit"]:focus-visible {
-    outline: 3px solid #A3ADA5 !important;
-    outline-offset: 3px;
-}
-.px-verdict { position: relative; overflow: hidden; margin-top: 1.4rem; padding: 1.8rem; border-radius: 24px; border: 1px solid rgba(212,215,211,.3); background: linear-gradient(160deg, #405653, #2C423F); box-shadow: 0 18px 44px rgba(0,0,0,.25); animation: px-rise .9s both; }
-.px-verdict.match { border-color: rgba(212,215,211,.55); }
-.px-verdict.miss { border-style: dashed; }
-.px-verdict::before { content:""; position:absolute; right:-80px; top:-80px; width:240px; height:240px; border-radius:50%; background: radial-gradient(circle, rgba(212,215,211,.3), transparent 70%); }
-.px-verdict small { position: relative; display: block; font-size: .7rem; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--steel); }
-.stMarkdown .px-verdict h3 { position: relative; margin: .6rem 0 1.4rem; padding: 0; font-size: clamp(1.15rem, 2.2vw, 1.5rem); font-weight: 300; line-height: 1.5; color: var(--mist) !important; }
-.px-tiers { position: relative; display: flex; align-items: center; gap: 1.4rem; margin-bottom: 1.4rem; }
-.px-tiers div small { margin-bottom: .3rem; }
-.px-tiers b { font-size: 2.6rem; font-weight: 200; line-height: 1; color: var(--mist); }
-.px-arrow { flex: 0 0 72px; height: 1px; background: linear-gradient(90deg, var(--mist), rgba(212,215,211,.2)); transform-origin: left; animation: px-line 1.2s .3s both; }
-.px-verdict.miss .px-arrow { background: repeating-linear-gradient(90deg, var(--sage) 0 6px, transparent 6px 12px); }
 </style>
 """
 
 
+def _get_benchmark_profiler() -> BenchmarkProfiler:
+    profiler = st.session_state.get("benchmark_profiler")
+    if not isinstance(profiler, BenchmarkProfiler):
+        profiler = BenchmarkProfiler(
+            capability_matrix=CapabilityMatrix(initial_matrix=TIER_MODEL_MAP)
+        )
+        st.session_state["benchmark_profiler"] = profiler
+    return profiler
+
+
 def render() -> None:
     ui.inject()
-    st.markdown(ui.html(_VERDICT_CSS), unsafe_allow_html=True)
+    st.markdown(_CARD_CSS, unsafe_allow_html=True)
 
     ui.hero(
-        "Calibration",
-        "Calibration Studio",
-        "Check whether questions take the expected route.",
+        "Dev Calibration Studio",
+        "Capability Calibration Studio",
+        "Benchmarking candidate model architectures against ground-truth rubrics.",
         note=(
-            "Each evaluation makes a real router request and is included in session analytics. "
-            "Without GROQ_API_KEY, the router uses its clearly labeled local mock response."
+            "Developer ground-truth calibration mode: evaluates candidate LLMs on semantic alignment, "
+            "formatting conformity, latency, and token efficiency to recommend winning model profiles."
         ),
     )
 
     ui.label(
-        "Evaluate",
-        "Evaluate routing decisions with controlled examples, compare expected and selected "
-        "complexity tiers, and inspect the resulting route and cost estimates.",
+        "Calibration Inputs",
+        "Input a test prompt and reference rubric to profile candidate model architectures.",
         index="01",
     )
-    with st.form("calibration_form"):
+
+    with st.form("calibration_studio_form"):
         prompt = st.text_area(
-            "Evaluation question",
-            value="Explain the difference between mitosis and meiosis, including their outcomes.",
+            "Evaluation Prompt / Student Query",
+            value="",
+            height=100,
             max_chars=MAX_QUESTION_CHARS,
-            key="calibration_prompt",
+            key="cal_prompt_input",
+            placeholder="Enter the standardized evaluation prompt or query to benchmark across models...",
+            help="The standardized prompt sent to all candidate models.",
         )
-        expected_tier = st.selectbox(
-            "Expected complexity tier",
-            options=(1, 2, 3),
-            format_func=lambda tier: {
-                1: "Tier 1 · Factual recall",
-                2: "Tier 2 · Conceptual explanation",
-                3: "Tier 3 · Multi-step reasoning",
-            }[tier],
-            key="calibration_expected_tier",
+        ground_truth = st.text_area(
+            "Ground-Truth Answer / Scoring Rubric",
+            value="",
+            height=140,
+            max_chars=3000,
+            key="cal_rubric_input",
+            placeholder="Enter the ground-truth reference answer or scoring criteria rubric...",
+            help="Reference answer or scoring rubric used to evaluate candidate outputs.",
         )
-        submitted = st.form_submit_button(
-            "Evaluate route",
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            tier_to_calibrate = st.selectbox(
+                "Target Complexity Tier",
+                options=(1, 2, 3),
+                format_func=lambda t: _TIER_LABELS[t],
+                index=1,
+                key="cal_target_tier",
+            )
+        with col2:
+            models_to_benchmark = st.multiselect(
+                "Candidate Models to Compare",
+                options=SUPPORTED_MODELS,
+                default=SUPPORTED_MODELS,
+                key="cal_models_select",
+            )
+
+        submit_btn = st.form_submit_button(
+            "Run Multi-Model Calibration",
             type="primary",
+            width="stretch",
             key="run_calibration",
         )
 
-    if submitted:
+    if submit_btn:
         if not prompt.strip():
-            st.warning("Enter an evaluation question before running calibration.")
+            st.warning("Enter an evaluation prompt before running calibration.")
+        elif not ground_truth.strip():
+            st.warning("Enter a ground-truth rubric before evaluating model candidates.")
+        elif not models_to_benchmark:
+            st.warning("Select at least one candidate model to evaluate.")
         else:
+            profiler = _get_benchmark_profiler()
+            router = get_router()
+            candidate_records = []
+            all_live = True
+
             try:
-                with st.spinner("Running the evaluation through the router..."):
-                    result = get_router().route_and_execute(prompt.strip())
-                record = {
+                with st.spinner("Executing candidate model inference and calculating evaluation rubrics..."):
+                    for model_name in models_to_benchmark:
+                        generated = router.model_client.generate(
+                            model_name=model_name,
+                            prompt=prompt.strip(),
+                            system_prompt=(
+                                "You are an expert educational AI tutor. Provide a comprehensive, accurate, "
+                                "and well-structured response meeting the highest pedagogical standards."
+                            ),
+                        )
+                        pricing = PRICING_PER_1M.get(
+                            model_name, {"input": 0.10, "output": 0.30}
+                        )
+                        cost = (
+                            generated["input_tokens"] * pricing["input"]
+                            + generated["output_tokens"] * pricing["output"]
+                        ) / 1_000_000.0
+                        is_mock = bool(generated.get("mock_fallback", False))
+                        all_live = all_live and not is_mock
+
+                        candidate_records.append(
+                            {
+                                "model": model_name,
+                                "output": generated["text"],
+                                "latency_ms": generated["latency_ms"],
+                                "cost": cost,
+                                "input_tokens": generated["input_tokens"],
+                                "output_tokens": generated["output_tokens"],
+                                "mock_fallback": is_mock,
+                            }
+                        )
+
+                    # Benchmark using BenchmarkProfiler
+                    evaluated = profiler.benchmark_models(
+                        candidate_records=candidate_records,
+                        ground_truth=ground_truth.strip(),
+                        auto_update_tier=int(tier_to_calibrate),
+                    )
+
+                best_model = evaluated[0]["model"]
+                best_score = evaluated[0]["composite_score"]
+                calibration_record = {
                     "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    "expected_tier": expected_tier,
-                    "actual_tier": result["tier"],
-                    "tier_match": expected_tier == result["tier"],
-                    "initial_model": result["initial_model"],
-                    "final_model": result["final_model"],
-                    "fallback_triggered": result["fallback_triggered"],
-                    "mock_fallback": result["mock_fallback"],
-                    "latency_ms": result["latency_ms"],
-                    "actual_cost": result["impact_metrics"]["actual_cost"],
+                    "tier": int(tier_to_calibrate),
+                    "tier_name": _TIER_LABELS[tier_to_calibrate],
+                    "best_model": best_model,
+                    "best_score": best_score,
+                    "results": evaluated,
+                    "all_live": all_live,
                 }
-                st.session_state.setdefault("calibration_results", []).append(record)
-                st.session_state["latest_calibration"] = record
+                st.session_state["active_calibration"] = calibration_record
+                st.session_state.setdefault("calibration_history", []).append(
+                    {
+                        "Timestamp (UTC)": calibration_record["timestamp"],
+                        "Tier": calibration_record["tier_name"],
+                        "Winning Model": best_model,
+                        "Composite Score": f"{best_score:.2%}",
+                        "Live Provider": all_live,
+                    }
+                )
                 st.session_state.pop("calibration_error", None)
+
             except Exception:
-                logger.exception("Calibration evaluation failed")
+                logger.exception("Calibration benchmark execution failed")
                 st.session_state["calibration_error"] = (
-                    "The evaluation could not be completed. Check the application logs."
+                    "Calibration could not be completed. Check application logs."
                 )
 
-    if error_message := st.session_state.get("calibration_error"):
-        st.error(error_message)
+    if error_msg := st.session_state.get("calibration_error"):
+        st.error(error_msg)
 
-    latest = st.session_state.get("latest_calibration")
-    if latest:
-        ui.label("Result", index="02")
-        if latest["tier_match"]:
-            state, kicker = "match", "Tier agreement"
-            message = f"Tier agreement: expected and selected Tier {latest['actual_tier']}."
-        else:
-            state, kicker = "miss", "Tier mismatch"
-            message = (
-                f"Tier mismatch: expected Tier {latest['expected_tier']}, "
-                f"router selected Tier {latest['actual_tier']}."
-            )
-        route = f"{latest['initial_model']} → {latest['final_model']}"
-        pills = "".join(
-            (
-                ui.pill(route),
-                ui.pill("escalated" if latest["fallback_triggered"] else "no escalation"),
-                ui.pill("simulated" if latest["mock_fallback"] else "live"),
-            )
+    # Render Calibration Results
+    active = st.session_state.get("active_calibration")
+    if active:
+        ui.label(
+            "Winning Architecture & Comparative Profiling",
+            "Scored on Semantic Match (60%), Format Adherence (20%), and Speed (20%).",
+            index="02",
         )
+
+        best_m = active["best_model"]
+        best_s = active["best_score"]
+        tier_str = active["tier_name"]
+
+        # Winning Architecture Badge Card
         st.markdown(
-            ui.html(
+            f"""
+            <div class="cal-winner">
+                <small>🏆 Winning Architecture Recommendation</small>
+                <h2>{escape(best_m)}</h2>
+                <p>
+                    Ranked <b>#1 for {escape(tier_str)}</b> with a composite score of 
+                    <b>{best_s:.1%}</b>. CapabilityMatrix has been calibrated for this session.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Side-by-Side Model Comparison Cards
+        card_html_list = []
+        for index, res in enumerate(active["results"], start=1):
+            is_winner = res["model"] == best_m
+            winner_cls = "winner-card" if is_winner else ""
+            status_text = "Live Groq" if not res.get("mock_fallback") else "Mock Fallback"
+            card_html_list.append(
                 f"""
-                <div class="px-verdict {state}">
-                    <small>{escape(kicker)}</small>
-                    <h3>{escape(message)}</h3>
-                    <div class="px-tiers">
-                        <div><small>Expected</small><b>{escape(str(latest["expected_tier"]))}</b></div>
-                        <span class="px-arrow"></span>
-                        <div><small>Selected</small><b>{escape(str(latest["actual_tier"]))}</b></div>
+                <div class="cal-card {winner_cls}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;color:#899B9A;">
+                            {'🥇 Winner' if is_winner else f'Rank #{index}'}
+                        </span>
+                        <span style="font-size:0.7rem;color:#A3ADA5;">{status_text}</span>
                     </div>
-                    <div class="px-pills">{pills}</div>
+                    <h3>{escape(res["model"])}</h3>
+                    <div class="cal-score-big">{res["composite_score"]:.1%}</div>
+                    <div style="font-size:0.75rem;color:#899B9A;margin-bottom:0.8rem;">Composite Calibration Score</div>
+                    <div class="cal-stat-row"><span>Semantic Match</span><b>{res["semantic_score"]:.1%}</b></div>
+                    <div class="cal-stat-row"><span>Token Overlap</span><b>{res["token_overlap_score"]:.1%}</b></div>
+                    <div class="cal-stat-row"><span>Format Adherence</span><b>{res["format_score"]:.1%}</b></div>
+                    <div class="cal-stat-row"><span>Latency</span><b>{res["latency_ms"]:.0f} ms</b></div>
+                    <div class="cal-stat-row"><span>Token Cost</span><b>${res["cost"]:.6f}</b></div>
                 </div>
                 """
-            ),
+            )
+
+        st.markdown(
+            f'<div class="cal-model-grid">{"".join(card_html_list)}</div>',
             unsafe_allow_html=True,
         )
 
-    calibration_results = st.session_state.get("calibration_results", [])
-    if calibration_results:
-        matches = sum(item["tier_match"] for item in calibration_results)
-        total = len(calibration_results)
-        ui.label(
-            "Evaluation history",
-            "Tier agreement reflects the expected tier you supplied; it is not a response-quality score.",
-            index="03",
-        )
-        st.markdown(
-            ui.tiles(
-                (
-                    ("Evaluations", str(total), "This session"),
-                    ("Matched", str(matches), "Expected tier equals selected tier"),
-                    ("Agreement", f"{matches / total * 100:.0f}%", "Of evaluations so far"),
-                )
-            ),
-            unsafe_allow_html=True,
-        )
+        # Detailed Outputs Expanders
         st.write("")
-        st.dataframe(calibration_results, width="stretch", hide_index=True)
-        st.caption(f"{matches} of {total} evaluations matched the expected tier.")
-    else:
-        ui.label("Evaluation history", index="03")
-        st.markdown(
-            ui.empty(
-                "No evaluations yet",
-                "Run an evaluation above to see the router's selected tier and route details.",
-            ),
-            unsafe_allow_html=True,
+        ui.label("Candidate Model Outputs", "Inspect generated candidate responses against the ground truth rubric.", index="03")
+        for res in active["results"]:
+            with st.expander(f"Candidate: {res['model']} (Score: {res['composite_score']:.1%})"):
+                st.markdown(res["output"])
+
+        # CSV Download
+        table_rows = [
+            {
+                "Rank": i,
+                "Model": r["model"],
+                "Composite Score": r["composite_score"],
+                "Semantic Score": r["semantic_score"],
+                "Token Overlap": r["token_overlap_score"],
+                "Format Score": r["format_score"],
+                "Speed Score": r["speed_score"],
+                "Latency (ms)": r["latency_ms"],
+                "Cost ($)": r["cost"],
+                "Simulated": r.get("mock_fallback", False),
+            }
+            for i, r in enumerate(active["results"], start=1)
+        ]
+        report_buf = StringIO()
+        writer = csv.DictWriter(report_buf, fieldnames=list(table_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(table_rows)
+
+        st.download_button(
+            "Download Calibration Results (CSV)",
+            data=report_buf.getvalue(),
+            file_name="axiom-calibration-benchmark.csv",
+            mime="text/csv",
+            key="download_cal_csv",
         )
+
+    # Session Calibration History
+    history = st.session_state.get("calibration_history", [])
+    if history:
+        with st.expander("Session Calibration History"):
+            st.dataframe(history, width="stretch", hide_index=True)

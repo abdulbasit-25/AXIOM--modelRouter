@@ -14,21 +14,34 @@ from typing import Any, Dict, List, Optional, Sequence
 
 # Exact pricing per 1,000,000 tokens (USD)
 PRICING_PER_1M: Dict[str, Dict[str, float]] = {
-    "openai/gpt-oss-20b": {
-        "input": 0.075,
-        "output": 0.30,
+    # Tier 1: Meta Llama 3.1 8B Instant
+    "llama-3.1-8b-instant": {
+        "input": 0.05,
+        "output": 0.08,
     },
+    # Tier 2: Alibaba Qwen 27B
     "qwen/qwen3.8-27b": {
         "input": 0.80,
         "output": 4.00,
     },
-    "openai/gpt-oss-120b": {
-        "input": 0.15,
-        "output": 0.60,
+    # Tier 3 & Fallback: Meta Llama 3.3 70B Versatile
+    "llama-3.3-70b-versatile": {
+        "input": 0.59,
+        "output": 0.79,
     },
+    # Frontier Baseline ($2.50 input / $10.00 output per 1M tokens)
     "Frontier Baseline (GPT-4o proxy)": {
         "input": 2.50,
         "output": 10.00,
+    },
+    # Compatibility aliases
+    "openai/gpt-oss-20b": {
+        "input": 0.075,
+        "output": 0.30,
+    },
+    "openai/gpt-oss-120b": {
+        "input": 0.15,
+        "output": 0.60,
     },
 }
 

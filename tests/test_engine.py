@@ -22,9 +22,9 @@ def test_pricing_table():
     """Verify exact pricing per 1M tokens matches specifications."""
     print("--> Testing exact pricing table definitions...")
     expected_pricing = {
-        "openai/gpt-oss-20b": {"input": 0.075, "output": 0.30},
+        "llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
         "qwen/qwen3.8-27b": {"input": 0.80, "output": 4.00},
-        "openai/gpt-oss-120b": {"input": 0.15, "output": 0.60},
+        "llama-3.3-70b-versatile": {"input": 0.59, "output": 0.79},
         "Frontier Baseline (GPT-4o proxy)": {"input": 2.50, "output": 10.00},
     }
 
@@ -64,8 +64,8 @@ def test_model_client_generate():
 
     # Test class wrapper
     client = ModelClient()
-    class_res = client.generate("openai/gpt-oss-20b", "Quick test")
-    assert class_res["model"] == "openai/gpt-oss-20b"
+    class_res = client.generate("llama-3.1-8b-instant", "Quick test")
+    assert class_res["model"] == "llama-3.1-8b-instant"
 
     print(" [PASS] Model client generate works seamlessly with fallback and metrics.")
 

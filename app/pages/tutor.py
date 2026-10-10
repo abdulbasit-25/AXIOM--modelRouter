@@ -143,7 +143,7 @@ def render() -> None:
                 key="question_input",
                 height=140,
                 max_chars=MAX_QUESTION_CHARS,
-                placeholder="Enter a question you would like help understanding.",
+                placeholder="Enter an educational question to route (e.g., Define photosynthesis, Explain mitosis vs meiosis, Prove by induction...)",
                 label_visibility="collapsed",
             )
             with st.container(key="composer_actions"):
@@ -186,61 +186,79 @@ def render() -> None:
         st.error(error_message)
 
     result = st.session_state.get("tutor_result")
+    
+    # Prominent Amber Fallback Warning Banner
+    if result and result.get("fallback_triggered"):
+        reason = result["impact_metrics"].get("fallback_reason", "Heuristic verification criteria failed")
+        st.warning(
+            f"⚠️ **Automated Fallback Triggered**: Speculative output from `{result['initial_model']}` "
+            f"failed verification criteria ({reason}). Immediately escalated to Frontier Reasoning Model `{result['final_model']}`."
+        )
+
     answer_column, route_column = st.columns([1.5, 1], gap="medium")
     with answer_column:
         with st.container(border=True):
             st.markdown('<div class="px-panel-head">Answer</div>', unsafe_allow_html=True)
             if result:
+                # Routing Badge
+                tier_badge_color = {1: "#899B9A", 2: "#A3ADA5", 3: "#D4D7D3"}.get(result["tier"], "#D4D7D3")
+                badge_html = (
+                    f'<div style="margin-bottom: 1rem;">'
+                    f'<span style="background: rgba(38,58,54,0.9); border: 1px solid {tier_badge_color}; '
+                    f'color: {tier_badge_color}; padding: 0.35rem 0.85rem; border-radius: 999px; '
+                    f'font-size: 0.76rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;">'
+                    f'Tier {result["tier"]} Route · {result["final_model"]}</span>'
+                    f'{"<span style=\"margin-left: 0.5rem; background: rgba(220,130,20,0.25); border: 1px solid #E08820; color: #F5A540; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.12em;\">⚠️ Escalated</span>" if result["fallback_triggered"] else ""}'
+                    f'</div>'
+                )
+                st.markdown(badge_html, unsafe_allow_html=True)
                 st.markdown(result["response_text"])
                 if result["mock_fallback"]:
                     st.info(
-                        "Simulated response: configure GROQ_API_KEY to use the live Groq model service."
+                        "Simulated response: configure GROQ_API_KEY in .env to enable live Groq model execution."
                     )
-                elif result["fallback_triggered"]:
-                    st.caption("The live model response was escalated after verification.")
             else:
                 st.markdown(
-                    ui.empty("No answer yet", "Run a tutor question to see its response."),
+                    ui.empty("No answer yet", "Run a tutor question above to see its response and routing telemetry."),
                     unsafe_allow_html=True,
                 )
     with route_column:
         with st.container(border=True):
-            st.markdown('<div class="px-panel-head">Routing path</div>', unsafe_allow_html=True)
+            st.markdown('<div class="px-panel-head">Routing path & Escalation</div>', unsafe_allow_html=True)
             if result:
                 route_stages = [
                     "Question received",
-                    f"Tier {result['tier']} · {result['initial_model']}",
-                    "Response verification",
+                    f"Tier {result['tier']} Selection · {result['initial_model']}",
+                    "Response heuristic verification",
                 ]
                 if result["fallback_triggered"]:
-                    route_stages.append(f"Escalated · {result['final_model']}")
-                route_stages.append("Answer returned")
+                    route_stages.append(f"Escalation · {result['final_model']}")
+                route_stages.append("Verified answer returned")
                 st.markdown(ui.path(route_stages), unsafe_allow_html=True)
                 if result["fallback_triggered"]:
                     st.caption(
-                        f"Escalation reason: {result['impact_metrics'].get('fallback_reason', 'verification failed')}"
+                        f"Escalation trigger: {result['impact_metrics'].get('fallback_reason', 'Verification heuristic failed')}"
                     )
             else:
                 st.markdown(
-                    ui.path(("Question received", "Classification", "Response verification", "Answer returned"), idle=True),
+                    ui.path(("Question received", "Complexity classification", "Target model inference", "Verification & Telemetry"), idle=True),
                     unsafe_allow_html=True,
                 )
 
     if result:
         impact = result["impact_metrics"]
+        multiplier_str = f"{impact.get('edtech_multiplier', 1.0):.1f}x students"
         metrics = (
-            ("Latency", f"{result['latency_ms']:.0f} ms", "End-to-end model latency"),
-            ("Estimated cost", f"${impact['actual_cost']:.6f}", f"{impact['savings_pct']:.1f}% below baseline"),
-            (
-                "Fallback status",
-                "Escalated" if result["fallback_triggered"] else "Direct",
-                result["final_model"],
-            ),
+            ("Model Latency", f"{result['latency_ms']:.0f} ms", "Wall-clock inference time"),
+            ("Axiom Cost", f"${impact['actual_cost']:.6f}", f"{impact['savings_pct']:.1f}% below baseline"),
+            ("Frontier Cost", f"${impact['baseline_cost']:.6f}", "GPT-4o proxy reference"),
+            ("EdTech Multiplier", multiplier_str, "SDG 4/8 Access Multiplier"),
         )
     else:
         metrics = (
-            ("Latency", "—", "Run a tutor question"),
-            ("Estimated cost", "—", "Run a tutor question"),
-            ("Fallback status", "—", "Not evaluated"),
+            ("Model Latency", "—", "Run a tutor question"),
+            ("Axiom Cost", "—", "Run a tutor question"),
+            ("Frontier Cost", "—", "Run a tutor question"),
+            ("EdTech Multiplier", "—", "Run a tutor question"),
         )
     st.markdown(ui.tiles(metrics), unsafe_allow_html=True)
