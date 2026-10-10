@@ -32,7 +32,7 @@ header[data-testid="stHeader"] { background: transparent; }
 @keyframes an-blink { 0%,100% {opacity:1;} 50% {opacity:.25;} }
 
 /* Hero */
-.an-hero { position: relative; overflow: hidden; border-radius: 28px; padding: 2.8rem 3rem; border: 1px solid rgba(212,215,211,.26); background: linear-gradient(145deg, #405653, #2C423F); box-shadow: 0 30px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(212,215,211,.2); }
+.an-hero { position: relative; overflow: hidden; border-radius: 28px; padding: 2.8rem 3rem; border: 1px solid rgba(212,215,211,.26); background: linear-gradient(145deg, #1c2c2a 0%, #233834 55%, #2a403c 100%); box-shadow: 0 30px 70px rgba(0,0,0,.4), inset 0 1px 0 rgba(212,215,211,.22), inset 0 0 80px rgba(16,26,24,.5); }
 .an-hero::before { content:""; position:absolute; inset:0; background-image: linear-gradient(rgba(212,215,211,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(212,215,211,.07) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse at 85% 30%, #000 15%, transparent 70%); mask-image: radial-gradient(ellipse at 85% 30%, #000 15%, transparent 70%); }
 .an-orb { position:absolute; right:-70px; top:-90px; width:300px; height:300px; border-radius:50%; background: var(--steel); filter: blur(70px); opacity:.4; animation: an-float 14s ease-in-out infinite; }
 .an-live { position: relative; display: inline-flex; align-items: center; gap: .6rem; padding: .38rem .95rem; border-radius: 999px; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--mist); border: 1px solid rgba(212,215,211,.45); background: rgba(24,38,35,.7); animation: an-rise .9s both; }
@@ -40,7 +40,7 @@ header[data-testid="stHeader"] { background: transparent; }
 .stMarkdown h1.an-title { position: relative; margin: 1rem 0 .4rem; padding: 0; font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 200; letter-spacing: .1em; line-height: 1.05; text-transform: uppercase; color: var(--mist) !important; animation: an-rise 1s .1s both; }
 .stMarkdown p.an-lead { position: relative; max-width: 34rem; margin: 0; font-size: 1.08rem; line-height: 1.8; color: var(--sage) !important; animation: an-rise 1s .2s both; }
 
-.an-note { margin: 1.1rem 0 0; padding-left: 1rem; border-left: 2px solid var(--steel); font-size: .82rem; line-height: 1.7; color: var(--sage); }
+.an-note { margin: 1.1rem 0 0; padding-left: 1rem; border-left: 2px solid var(--steel); font-size: .82rem; line-height: 1.7; color: var(--white); }
 
 /* Labels */
 .an-label { margin: 3rem 0 1.2rem; display: flex; align-items: center; gap: 1rem; font-size: .75rem; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; color: var(--steel); }
@@ -49,27 +49,31 @@ header[data-testid="stHeader"] { background: transparent; }
 
 /* Metric tiles */
 .an-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-top: 1.4rem; }
-.an-tile { position: relative; overflow: hidden; padding: 1.4rem 1.4rem 1.3rem; border-radius: 20px; border: 1px solid rgba(212,215,211,.22); background: linear-gradient(160deg, #405653, #2C423F); box-shadow: 0 12px 28px rgba(0,0,0,.2); animation: an-rise .9s both; transition: transform .45s var(--ease), border-color .45s, box-shadow .45s; }
+.an-tile { position: relative; overflow: hidden; padding: 1.4rem 1.4rem 1.3rem; border-radius: 20px; border: 1px solid rgba(212,215,211,.22); background: linear-gradient(160deg, #2b413d, #1f312e); box-shadow: 0 14px 30px rgba(0,0,0,.3); animation: an-rise .9s both; transition: transform .45s var(--ease), border-color .45s, box-shadow .45s; }
 .an-tile::before { content:""; position:absolute; left:0; top:0; height:2px; width:100%; background: linear-gradient(90deg, var(--mist), transparent); transform-origin: left; animation: an-line 1.4s .4s both; }
+.an-tile:nth-child(1)::before { background: linear-gradient(90deg, #E5E7E3, transparent); }
+.an-tile:nth-child(2)::before { background: linear-gradient(90deg, #899B9A, transparent); }
+.an-tile:nth-child(3)::before { background: linear-gradient(90deg, #A3ADA5, transparent); }
+.an-tile:nth-child(4)::before { background: linear-gradient(90deg, #D4D7D3, #899B9A 60%, transparent); }
 .an-tile:hover { transform: translateY(-6px); border-color: rgba(212,215,211,.45); box-shadow: 0 22px 44px rgba(0,0,0,.3); }
 .an-tile small { display: block; font-size: .7rem; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--sage); }
 .an-tile b { display: block; margin: .9rem 0 .35rem; font-size: clamp(1.4rem, 2.4vw, 1.9rem); font-weight: 300; letter-spacing: .02em; color: var(--mist); word-break: break-word; }
 .an-tile span { font-size: .8rem; color: var(--sage); }
 
 /* Panels */
-.an-panel { position: relative; height: 100%; padding: 1.6rem 1.6rem 1.5rem; border-radius: 22px; border: 1px solid rgba(212,215,211,.22); background: linear-gradient(160deg, #405653, #2C423F); box-shadow: 0 14px 34px rgba(0,0,0,.2); animation: an-rise .9s both; }
+.an-panel { position: relative; height: 100%; padding: 1.6rem 1.6rem 1.5rem; border-radius: 22px; border: 1px solid rgba(212,215,211,.22); background: linear-gradient(160deg, #2b413d, #1f312e); box-shadow: 0 16px 36px rgba(0,0,0,.3); animation: an-rise .9s both; }
 .an-panel h4 { margin: 0 0 1.3rem; font-size: .75rem; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; color: var(--steel); }
 
 .an-bar { margin-bottom: 1rem; }
 .an-bar-top { display: flex; justify-content: space-between; gap: 1rem; font-size: .9rem; color: var(--mist); }
 .an-bar-top em { font-style: normal; color: var(--sage); }
-.an-track { height: 8px; margin-top: .5rem; border-radius: 8px; background: rgba(212,215,211,.12); overflow: hidden; }
-.an-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--steel), var(--mist)); transform-origin: left; animation: an-fill 1.2s var(--ease) both; }
+.an-track { height: 9px; margin-top: .55rem; border-radius: 9px; background: rgba(16,26,24,.65); border: 1px solid rgba(212,215,211,.12); overflow: hidden; }
+.an-fill { height: 100%; border-radius: 9px; background: linear-gradient(90deg, #6f8281, #D4D7D3); box-shadow: 0 0 14px rgba(212,215,211,.35); transform-origin: left; animation: an-fill 1.2s var(--ease) both; }
 
 .an-gauges { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 .an-gauge-wrap { text-align: center; }
-.an-gauge { --p: 0; position: relative; width: 112px; height: 112px; margin: 0 auto .7rem; border-radius: 50%; background: conic-gradient(var(--mist) calc(var(--p) * 1%), rgba(212,215,211,.14) 0); animation: an-gauge 1.4s var(--ease) both; display: grid; place-items: center; }
-.an-gauge::before { content:""; position:absolute; inset: 9px; border-radius: 50%; background: #2C423F; }
+.an-gauge { --p: 0; position: relative; width: 112px; height: 112px; margin: 0 auto .7rem; border-radius: 50%; background: conic-gradient(var(--c, var(--mist)) calc(var(--p) * 1%), rgba(212,215,211,.12) 0); box-shadow: 0 0 26px color-mix(in srgb, var(--c, #D4D7D3) 22%, transparent); animation: an-gauge 1.4s var(--ease) both; display: grid; place-items: center; }
+.an-gauge::before { content:""; position:absolute; inset: 9px; border-radius: 50%; background: #212f2c; }
 .an-gauge strong { position: relative; font-size: 1.15rem; font-weight: 300; color: var(--mist); }
 .an-gauge-wrap small { font-size: .68rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--sage); }
 .an-tokens { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid rgba(212,215,211,.16); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--sage); }
@@ -118,11 +122,11 @@ def _tile(index: int, label: str, value: str, note: str) -> str:
     )
 
 
-def _gauge(percent: float, label: str) -> str:
+def _gauge(percent: float, label: str, color: str = "#D4D7D3") -> str:
     shown = max(0.0, min(100.0, percent))
     return (
         '<div class="an-gauge-wrap">'
-        f'<div class="an-gauge" style="--p:{shown:.1f}"><strong>{percent:.1f}%</strong></div>'
+        f'<div class="an-gauge" style="--p:{shown:.1f};--c:{color}"><strong>{percent:.1f}%</strong></div>'
         f"<small>{escape(label)}</small></div>"
     )
 
@@ -153,7 +157,9 @@ def render() -> None:
                 <div class="an-live"><i></i>Live session</div>
                 <h1 class="an-title">SDG Analytics</h1>
                 <p class="an-lead">See what the router is doing in this session.</p>
-                <p class="an-note">Session-scoped operational proxies only. Query counts do not measure learning outcomes or access; savings compare estimated token cost with the configured frontier-model proxy.</p>
+                <p class="an-lead" style="color: #FFFFFF; font-size: 11px; line-height: 1.8; margin: 0; opacity: 0.9;">
+    Session-scoped operational proxies only. Query counts do not measure learning outcomes or access; savings compare estimated token cost with the configured frontier-model proxy.
+</p>
             </div>
             <div class="an-tiles">{tiles}</div>
             """
@@ -213,8 +219,8 @@ def render() -> None:
                 <div class="an-panel">
                     <h4>Routing and efficiency</h4>
                     <div class="an-gauges">
-                        {_gauge(fallback_rate, "Fallback rate")}
-                        {_gauge(savings_pct, "Savings vs baseline")}
+                        {_gauge(fallback_rate, "Fallback rate", "#899B9A")}
+                        {_gauge(savings_pct, "Savings vs baseline", "#E5E7E3")}
                     </div>
                     <div class="an-tokens"><span>Input / output tokens</span><b>{tokens_in} / {tokens_out}</b></div>
                 </div>
