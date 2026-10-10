@@ -20,6 +20,20 @@ def feature_card(title: str, body: str) -> None:
     )
 
 
+def team_member_card(name: str, role: str, initials: str) -> None:
+    """Render a team member card."""
+    st.markdown(
+        (
+            '<article class="team-card">'
+            f'<div class="team-avatar" aria-hidden="true">{escape(initials)}</div>'
+            f'<h3 class="team-name">{escape(name)}</h3>'
+            f'<div class="team-role">{escape(role)}</div>'
+            "</article>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
 def steps_markup(steps: Sequence[tuple[str, str]]) -> str:
     items = "".join(
         f"<li><strong>{escape(title)}</strong> {escape(text)}</li>" for title, text in steps
