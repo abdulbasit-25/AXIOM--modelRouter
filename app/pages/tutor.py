@@ -202,13 +202,21 @@ def render() -> None:
             if result:
                 # Routing Badge
                 tier_badge_color = {1: "#899B9A", 2: "#A3ADA5", 3: "#D4D7D3"}.get(result["tier"], "#D4D7D3")
+                escalated_badge = (
+                    '<span style="margin-left: 0.5rem; background: rgba(220,130,20,0.25); '
+                    'border: 1px solid #E08820; color: #F5A540; padding: 0.35rem 0.85rem; '
+                    'border-radius: 999px; font-size: 0.74rem; font-weight: 600; '
+                    'letter-spacing: 0.12em;">⚠️ Escalated</span>'
+                    if result["fallback_triggered"]
+                    else ""
+                )
                 badge_html = (
                     f'<div style="margin-bottom: 1rem;">'
                     f'<span style="background: rgba(38,58,54,0.9); border: 1px solid {tier_badge_color}; '
                     f'color: {tier_badge_color}; padding: 0.35rem 0.85rem; border-radius: 999px; '
                     f'font-size: 0.76rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;">'
                     f'Tier {result["tier"]} Route · {result["final_model"]}</span>'
-                    f'{"<span style=\"margin-left: 0.5rem; background: rgba(220,130,20,0.25); border: 1px solid #E08820; color: #F5A540; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.12em;\">⚠️ Escalated</span>" if result["fallback_triggered"] else ""}'
+                    f'{escalated_badge}'
                     f'</div>'
                 )
                 st.markdown(badge_html, unsafe_allow_html=True)
