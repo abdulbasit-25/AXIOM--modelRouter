@@ -11,7 +11,7 @@ _Intelligence, routed with purpose._
 ![Groq](https://img.shields.io/badge/Provider-Groq-829191?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Prototype-949B96?style=flat-square)
 
-Built for the **AICON'26 / Build with AI Hackathon**
+Built for the **AICON'26 / Build FOR AI Hackathon**
 Supporting **SDG 4: Quality Education** and **SDG 8: Decent Work and Economic Growth**
 
 </div>
@@ -55,7 +55,7 @@ The app opens in your browser. No API key is needed to explore it, and without o
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Production AI Tutor** | Pick a teaching scenario, adapt the prompt, and send it through classification, routing, verification and telemetry. Shows the answer, selected model, fallback decision, tokens, latency and estimated cost. |
 | **Calibration Studio**  | Compares the tier the router selects with the tier you expect, using controlled examples. It evaluates routing agreement only, not answer quality.                                                            |
-| **SDG Analytics**       | Shows session routing and cost estimates, exports CSV reports, and benchmarks supported models with general or ABSA/LDA rubrics.                                                                                 |
+| **SDG Analytics**       | Shows session routing and cost estimates, exports CSV reports, and benchmarks supported models with general or ABSA/LDA rubrics.                                                                              |
 | **About**               | Explains the engine, the five-step flow and the team.                                                                                                                                                         |
 
 Other highlights:
@@ -208,7 +208,7 @@ tests/                Script-style application, engine and router tests
 
 <div align="center">
 
-**Axiom** · AICON'26 / Build with AI Hackathon
+**Axiom** · AICON'26 / Build FOR AI Hackathon
 SDG 4 Quality Education · SDG 8 Decent Work and Economic Growth
 
 </div>
